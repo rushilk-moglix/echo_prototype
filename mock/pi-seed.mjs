@@ -86,7 +86,7 @@ export function piAgent(now) {
       { key: 'supplier_verbatim', label: 'Supplier words', type: 'string', description: 'Exact words when disputed or unclear', required: false },
     ],
     sections: PROMPT.map(([title, body, kind], i) => ({ id: `pi_${i + 1}`, enabled: true, title, kind: kind || 'text', body })),
-    engine: { preset: 'balanced', mode: 'pipeline', stt: 'saaras-v4', stt_fallback: 'scribe-v2-realtime', llm: 'claude-haiku-4.5', fallback: 'gpt-6-luna',
+    engine: { preset: 'balanced', mode: 'pipeline', stt: 'saaras-v4', stt_fallback: 'soniox-stt-rt-v5', llm: 'gpt-6-luna', fallback: 'deepseek-v4.1-flash',
       tts: 'bulbul-v3', tts_fallback: 'sonic-3.6', realtime_alt: 'gemini-3.8-live', turn_detector: 'livekit', voice: 'anushka (female)', language: 'hinglish',
       temperature: 0.4, max_tokens: 220, speed: 0.98, fallback_after_ms: 2500,
       turn: { first: 'agent', endpoint_ms: 700, interruption: 'medium', backchannel: true, noise: true, voicemail: 'message', silence_end_s: 20, max_minutes: 12 } },

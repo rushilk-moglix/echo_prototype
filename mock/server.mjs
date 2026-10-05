@@ -113,7 +113,7 @@ function agentDefaults(a) {
   a.sync_target ||= a.synced_platform ? { type: a.synced_platform, url: '' } : { type: 'none', url: '' };
   a.references ||= [];
   a.lookups ||= [];
-  if (!a.engine || !String(a.engine.s2s || a.engine.stt || '').includes('-')) a.engine = { preset: 'balanced', mode: 'pipeline', stt: 'saaras-v4', stt_fallback: 'scribe-v2-realtime', llm: 'claude-haiku-4.5', fallback: 'gpt-6-luna', tts: 'bulbul-v3', tts_fallback: 'sonic-3.6', realtime_alt: 'gemini-3.8-live', turn_detector: 'livekit', voice: 'anushka (female)' };
+  if (!a.engine || !String(a.engine.s2s || a.engine.stt || '').includes('-')) a.engine = { preset: 'balanced', mode: 'pipeline', stt: 'saaras-v4', stt_fallback: 'soniox-stt-rt-v5', llm: 'gpt-6-luna', fallback: 'deepseek-v4.1-flash', tts: 'bulbul-v3', tts_fallback: 'sonic-3.6', realtime_alt: 'gemini-3.8-live', turn_detector: 'livekit', voice: 'anushka (female)' };
   return a;
 }
 const planOf = (a) => ({ mode: 'row', max_rows: 8, overflow: 'split', order_dir: 'asc', call_columns: [], row_columns: [], ...(a?.input_plan || {}) });
@@ -140,25 +140,25 @@ const PLACEHOLDERS = [
 // Models Echo can run (speech to speech, or listen, think, speak), each with its own voices.
 const ENGINES = {
   // Four presets from the voice preset sheet (Echo-Technical-Analysis, Voice_Presets). Each stage has a
-  // primary and a fallback; metrics are the verified figures only (checked 1 Oct 2026), estimates say so.
+  // primary and a fallback; metrics are published figures only (re-researched 5 Oct 2026), estimates say so.
   presets: [
     { key: 'balanced', label: 'Balanced', sub: 'Default for new agents', meta: 'Best accuracy and a natural Indian voice at a sensible cost',
-      engine: { mode: 'pipeline', stt: 'saaras-v4', stt_fallback: 'scribe-v2-realtime', llm: 'claude-haiku-4.5', fallback: 'gpt-6-luna', tts: 'bulbul-v3', tts_fallback: 'sonic-3.6', realtime_alt: 'gemini-3.8-live', turn_detector: 'livekit' },
-      metrics: { latency: '1.0 to 1.2 s (estimate)', humanness: 'Bulbul v3 ranked first in a blind telephony test across 11 Indian languages', accuracy: 'Saaras V4: lowest average WER on 7 English benchmarks; Indic tested on Vistaar', cost: '$0.032 per call min (Rs 2.77)' } },
+      engine: { mode: 'pipeline', stt: 'saaras-v4', stt_fallback: 'soniox-stt-rt-v5', llm: 'gpt-6-luna', fallback: 'deepseek-v4.1-flash', tts: 'bulbul-v3', tts_fallback: 'sonic-3.6', realtime_alt: 'gemini-3.8-live', turn_detector: 'livekit' },
+      metrics: { latency: 'About 1.0 s end to end (estimate): Saaras V4 under 150 ms, Bulbul v3 under 250 ms; GPT-6 Luna first token not published, measure in the pilot', humanness: 'Bulbul v3 first in a blind 8 kHz telephony test across 11 Indian languages (Sarvam study)', intelligence: 'GPT-6 Luna 38 on the AA Intelligence Index; backup DeepSeek V4.1 Flash 39 (0.94 s first token)', accuracy: 'Saaras V4 lowest WER on IndicContextEval; Soniox backup best streaming Hindi CER (7.4%)', cost: '$0.020 per call min (Rs 1.76)' } },
     { key: 'intelligence', label: 'High intelligence', sub: 'Hard conversations', meta: 'Disputes, negotiation, many orders or lines on one call',
-      engine: { mode: 'pipeline', stt: 'saaras-v4', stt_fallback: 'amazon-transcribe', llm: 'claude-sonnet-5', fallback: 'gpt-6-sol', tts: 'sonic-3.6', tts_fallback: 'eleven-v3-conversational', realtime_alt: 'gemini-3.8-live-thinking', turn_detector: 'livekit' },
-      metrics: { latency: '1.4 to 1.8 s (estimate); use a short acknowledgement', humanness: 'Sonic 3.5 Elo 1203, ElevenLabs v3 Elo 1177 (Artificial Analysis Speech Arena)', accuracy: 'Saaras V4 as Balanced', cost: '$0.045 per call min (Rs 3.99)' } },
+      engine: { mode: 'pipeline', stt: 'saaras-v4', stt_fallback: 'soniox-stt-rt-v5', llm: 'claude-sonnet-5', fallback: 'gpt-6-sol', tts: 'eleven-v4', tts_fallback: 'sonic-3.6', realtime_alt: 'gemini-3.8-live-thinking', turn_detector: 'livekit' },
+      metrics: { latency: 'About 1.4 to 1.8 s (estimate); Sonnet 5 first token 0.68 s; cover with a short acknowledgement', humanness: 'Eleven v4 #1 on the AA Provider Voice Arena (Elo 1321); Sonic 3.6 backup Elo 1278', intelligence: 'Claude Sonnet 5 38 (max); backup GPT-6 Sol 34 (low) to 43 (high)', accuracy: 'Saaras V4 as Balanced', cost: '$0.062 per call min (Rs 5.43)' } },
     { key: 'fast', label: 'Ultra fast', sub: 'Lowest delay', meta: 'Feels like a person on the line',
-      engine: { mode: 'pipeline', stt: 'scribe-v2-realtime', stt_fallback: 'flux-multilingual', llm: 'gpt-oss-120b-groq', fallback: 'mercury-voice', tts: 'falcon-2', tts_fallback: 'eleven-flash-v2.5', realtime_alt: 'grok-voice-think-fast-2', turn_detector: 'krisp-v3' },
-      metrics: { latency: 'Falcon 130 ms to first audio; Mercury Voice about 170 ms; 0.6 to 0.8 s end to end (estimate)', humanness: 'No independent score for Falcon yet', accuracy: 'Flux Multilingual for Hindi and English; Indic WER not independently tested', cost: '$0.013 per call min (Rs 1.17)' } },
+      engine: { mode: 'pipeline', stt: 'scribe-v2-realtime', stt_fallback: 'flux-multilingual', llm: 'mercury-voice', fallback: 'gpt-oss-120b-groq', tts: 'falcon-2', tts_fallback: 'eleven-v4-turbo', realtime_alt: 'grok-voice-think-fast-2', turn_detector: 'krisp-v3' },
+      metrics: { latency: 'About 0.6 to 0.8 s (estimate): Scribe v2 Realtime 128 ms, Mercury Voice 320 ms first token, Falcon 2 under 100 ms', humanness: 'No independent score for Falcon 2; Eleven v4 Turbo backup', intelligence: 'Mercury Voice has no published index; backup gpt-oss-120b 12 (0.71 s first token)', accuracy: 'Scribe v2 Realtime 5.1% WER (Coval); Flux Multilingual backup covers Hindi', cost: '$0.014 per call min (Rs 1.23)' } },
     { key: 'saver', label: 'Cost saver', sub: 'High volume, simple calls', meta: 'Reminders, notifications, surveys',
-      engine: { mode: 'pipeline', stt: 'soniox-stt-rt-v5', stt_fallback: 'saaras-v4', llm: 'gpt-6-luna', fallback: 'gpt-5.6-luna', tts: 'falcon-2', tts_fallback: 'gemini-3.8-flash-lite-tts', realtime_alt: '', turn_detector: 'off' },
-      metrics: { latency: '1.0 to 1.3 s (estimate)', humanness: 'Falcon as Ultra fast', accuracy: 'Soniox Indic accuracy not independently tested; A/B 500 calls first', cost: '$0.008 per call min (Rs 0.73)' } },
+      engine: { mode: 'pipeline', stt: 'soniox-stt-rt-v5', stt_fallback: 'saaras-v4', llm: 'gpt-6-luna', fallback: 'gpt-oss-120b-groq', tts: 'falcon-2', tts_fallback: 'gemini-3.8-flash-lite-tts', realtime_alt: '', turn_detector: 'off' },
+      metrics: { latency: 'About 1.0 to 1.3 s (estimate)', humanness: 'Falcon 2 not independently scored; Gemini 3.8 Flash TTS (sibling) Elo 1275', intelligence: 'GPT-6 Luna 38; backup gpt-oss-120b 12', accuracy: 'Soniox 1.27% English WER, 7.4% Hindi CER streaming', cost: '$0.008 per call min (Rs 0.73)' } },
     { key: 'custom', label: 'Custom', sub: 'Pick each model', meta: 'For teams comparing models', engine: {} },
   ],
   turn_detectors: [
-    { id: 'livekit', label: 'LiveKit turn detector', note: 'Open source, supports Hindi, about 25 ms per check' },
-    { id: 'krisp-v3', label: 'Krisp Turn v3', note: 'Multilingual, from audio alone; under 200 ms for most turns' },
+    { id: 'livekit', label: 'LiveKit turn detector', note: 'Open source; Hindi 99.4% true positive; about 25 ms per check' },
+    { id: 'krisp-v3', label: 'Krisp Turn v3', note: 'Multilingual, from audio alone; no published latency in ms' },
     { id: 'off', label: 'Off: use the model', note: "Relies on the voice model's own end of turn detection" },
   ],
   s2s: [
@@ -192,7 +192,7 @@ const ENGINES = {
     { id: 'gemini-2.5-flash', label: 'Gemini 2.5 Flash', vendor: 'Google' },
     { id: 'gemini-2.5-flash-lite', label: 'Gemini 2.5 Flash-Lite', vendor: 'Google' },
     { id: 'gpt-4.1-mini', label: 'GPT-4.1 mini', vendor: 'OpenAI' },
-    { id: 'claude-haiku-4.5', label: 'Claude Haiku 4.5', vendor: 'Anthropic' },
+    { id: 'claude-haiku-4.5', label: 'Claude Haiku 4.5 (older)', vendor: 'Anthropic' },
     { id: 'claude-sonnet-4.5', label: 'Claude Sonnet 4.5', vendor: 'Anthropic' },
     { id: 'gemini-2.5-pro', label: 'Gemini 2.5 Pro', vendor: 'Google' },
     { id: 'gpt-4.1', label: 'GPT-4.1', vendor: 'OpenAI' },
@@ -201,10 +201,13 @@ const ENGINES = {
     { id: 'sarvam-m', label: 'Sarvam-M', vendor: 'Sarvam' },
     { id: 'claude-sonnet-5', label: 'Claude Sonnet 5 (low effort)', vendor: 'Anthropic' },
     { id: 'gpt-6-luna', label: 'GPT-6 Luna (no reasoning)', vendor: 'OpenAI' },
+    { id: 'gemini-3.5-flash-lite', label: 'Gemini 3.5 Flash-Lite', vendor: 'Google' },
+    { id: 'deepseek-v4.1-flash', label: 'DeepSeek V4.1 Flash', vendor: 'DeepSeek' },
+    { id: 'muse-glimmer-30b', label: 'Muse Glimmer-30B', vendor: 'Meta' },
     { id: 'gpt-6-sol', label: 'GPT-6 Sol (low effort)', vendor: 'OpenAI' },
     { id: 'gpt-5.6-luna', label: 'GPT-5.6 Luna', vendor: 'OpenAI' },
     { id: 'gpt-oss-120b-groq', label: 'gpt-oss-120b', vendor: 'Groq' },
-    { id: 'mercury-voice', label: 'Mercury Voice (preview)', vendor: 'Inception' },
+    { id: 'mercury-voice', label: 'Mercury Voice', vendor: 'Inception' },
   ],
   tts: [
     { id: 'bulbul-v2', label: 'Bulbul v2', vendor: 'Sarvam', voices: ['anushka', 'manisha', 'vidya', 'arya', 'abhilash', 'karun', 'hitesh'] },
@@ -218,6 +221,8 @@ const ENGINES = {
     { id: 'bulbul-v3', label: 'Bulbul v3', vendor: 'Sarvam', voices: ['anushka (female)', 'manisha (female)', 'vidya (female)', 'arya (female)', 'abhilash (male)', 'karun (male)', 'hitesh (male)'] },
     { id: 'sonic-3.6', label: 'Sonic 3.6', vendor: 'Cartesia', voices: ['Voice from your Cartesia library'] },
     { id: 'falcon-2', label: 'Falcon 2', vendor: 'Murf', voices: ['Voice from your Murf library'] },
+    { id: 'eleven-v4', label: 'Eleven v4', vendor: 'ElevenLabs', voices: ['Voice from your ElevenLabs library'] },
+    { id: 'eleven-v4-turbo', label: 'Eleven v4 Turbo', vendor: 'ElevenLabs', voices: ['Voice from your ElevenLabs library'] },
     { id: 'eleven-v3-conversational', label: 'v3 Conversational', vendor: 'ElevenLabs', voices: ['Voice from your ElevenLabs library'] },
     { id: 'gemini-3.8-flash-lite-tts', label: 'Gemini 3.8 Flash-Lite TTS', vendor: 'Google', voices: ['Kore', 'Aoede', 'Leda'] },
   ],

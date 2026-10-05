@@ -498,9 +498,9 @@ export class AgentDetailComponent implements OnInit, OnDestroy {
   turnLabel = computed(() => (this.meta()?.engines?.turn_detectors || []).find((t: any) => t.id === this.engine().turn_detector)?.label || 'Model default');
   /** First clause of a metric, for the small chips on the preset tiles. */
   short(x: string): string { return String(x).split(/ \(|;| per call/)[0]; }
-  /** '$0.032 per call min (Rs 2.77)' -> '₹2.77 / min' for the preset tiles. */
+  /** '$0.020 per call min (Rs 1.76)' -> '₹1.76 / min' for the preset tiles. */
   perMin(cost?: string): string { const m = cost?.match(/Rs\s*([\d.]+)/); return m ? `₹${m[1]} / min` : ''; }
-  /** The models in use, in one line: 'Saaras V4 · Claude Haiku 4.5 · Bulbul v3'. */
+  /** The models in use, in one line: 'Saaras V4 · GPT-6 Luna · Bulbul v3'. */
   engineLine = computed(() => {
     const e = this.engine();
     const name = (kind: string, id?: string) => this.modelLabel(kind, id).split(' · ')[0].replace(/\s*\(.*?\)/g, '');
