@@ -52,7 +52,7 @@ const PAGE = 40;
       <div class="card">
         <div class="card-head">
           <span class="card-title">
-            @for (t of TABS; track t.key) { <button [class]="'tab' + (tab() === t.key ? ' on' : '')" (click)="tab.set(t.key)">{{ t.label }}</button> }
+            <span role="tablist" aria-label="Settings" class="tablist" (keydown)="tabKeys($event)">@for (t of TABS; track t.key) { <button role="tab" [attr.aria-selected]="tab() === t.key" [attr.tabindex]="tab() === t.key ? 0 : -1" [class]="'tab' + (tab() === t.key ? ' on' : '')" (click)="tab.set(t.key)">{{ t.label }}</button> }</span>
           </span>
         </div>
 
@@ -351,6 +351,14 @@ export class SettingsComponent implements OnInit {
   readonly RETRYABLE = CALL_STATUSES.filter((s) => s.group !== 'in_progress' && s.group !== 'not_dialled').map((s) => ({ key: s.key, label: s.label, hover: statusHover(s.key) }));
 
   tab = signal<Tab>('workspace');
+  /** Arrow keys, Home and End move between tabs (WAI-ARIA tabs pattern). */
+  tabKeys(e: KeyboardEvent): void {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    const tabs = [...(e.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('[role="tab"]')];
+    const i = tabs.indexOf(document.activeElement as HTMLElement); if (i < 0) return;
+    const n = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    e.preventDefault(); tabs[n].click(); tabs[n].focus();
+  }
   s = signal<any>(null);
   private saved = signal('');
   dirty = computed(() => !!this.s() && JSON.stringify(this.s()) !== this.saved());

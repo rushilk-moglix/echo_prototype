@@ -235,7 +235,7 @@ let guideUid = 0;
   `,
   styles: [`
     :host { display: inline-flex; vertical-align: middle; }
-    .g-btn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; margin-left: 2px; border: 0; border-radius: 50%; background: transparent; color: var(--ds-accent-fg); cursor: help; padding: 0; }
+    .g-btn { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin: -2px -2px -2px 0; border: 0; border-radius: 50%; background: transparent; color: var(--ds-accent-fg); cursor: help; padding: 0; }
     .g-btn:hover, .g-btn[aria-expanded="true"] { background: var(--ds-accent-soft); }
     .g-btn:focus-visible { outline: 2px solid var(--ds-focus, currentColor); outline-offset: 1px; }
     .g-btn svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }

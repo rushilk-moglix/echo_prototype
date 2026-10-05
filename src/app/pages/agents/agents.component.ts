@@ -84,7 +84,7 @@ type SyncState = { label: string; cls: string; title: string };
             @for (a of shown(); track a.key) {
               <div class="grid-row clickable" [style.grid-template-columns]="cols" (click)="open(a.key)">
                 <span style="min-width: 0">
-                  <div class="row-title">{{ a.label }}</div>
+                  <div class="row-title" [title]="a.label">{{ a.label }}</div>
                   <div class="row-sub">{{ a.description || a.key }}</div>
                 </span>
                 <span>

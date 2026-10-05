@@ -6,6 +6,7 @@ import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
 import { fmtNum, fmtSecs } from '../../utils/format';
 import { setNoReplyUnder } from '../../utils/status';
+import { installDialogKeys } from '../../core/a11y/dialog-keys';
 
 const NAV = [
   { to: '/overview', icon: 'overview', label: 'Overview' },
@@ -51,7 +52,7 @@ const NAV = [
           @for (g of groups(); track g.label) {
             <div class="sb-group"><span class="sb-txt">{{ g.label }}</span></div>
             @for (n of g.items; track n.to) {
-              <a [routerLink]="n.to" routerLinkActive="active" class="sb-link" [attr.title]="isOpen() ? null : n.label">
+              <a [routerLink]="n.to" routerLinkActive="active" ariaCurrentWhenActive="page" class="sb-link" [attr.title]="isOpen() ? null : n.label">
                 <span class="sb-ico"><app-icon [name]="n.icon" [size]="18"></app-icon></span>
                 <span class="sb-txt">{{ n.label }}</span>
                 @if (n.to === '/console' && activeCalls() > 0) { <span class="sb-live" title="Live calls"></span> }
@@ -77,7 +78,7 @@ const NAV = [
           }
           <div class="sb-me">
             <span class="sb-avatar" [title]="auth.me()?.email || ''">{{ initials() }}</span>
-            <span class="sb-txt sb-who"><b>{{ currentOrgName() || 'Echo' }}</b><small>{{ auth.me()?.email || '' }}</small></span>
+            <span class="sb-txt sb-who"><b>{{ currentOrgName() || 'Echo' }}</b><small [title]="auth.me()?.email || ''">{{ auth.me()?.email || '' }}</small></span>
             <button class="sb-theme sb-txt" (click)="cycleTheme()" [title]="'Theme: ' + themeLabel()" [attr.aria-label]="'Theme: ' + themeLabel()"><app-icon [name]="themeIcon()" [size]="16"></app-icon></button>
             <button class="sb-out sb-txt" (click)="signOut()" title="Sign out" aria-label="Sign out"><app-icon name="signout" [size]="16"></app-icon></button>
           </div>
@@ -171,6 +172,8 @@ export class ShellComponent implements OnInit {
   closeOnLink(e: Event): void { if ((e.target as HTMLElement).closest('a')) { this.drawer.set(false); this.hovered.set(false); } }
 
   ngOnInit(): void {
+    // Every dialog: focus moves in and stays, Esc closes, focus returns.
+    installDialogKeys('.modal, [role="dialog"]', '.modal-backdrop');
     this.applyTheme();
     this.media.addEventListener('change', this.applyTheme);
     // A page refresh restores accessToken/currentOrgId from localStorage but

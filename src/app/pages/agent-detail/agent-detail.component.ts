@@ -182,6 +182,14 @@ export class AgentDetailComponent implements OnInit, OnDestroy {
     return items;
   });
   checkDone = computed(() => this.checklist().filter(c => c.ok).length);
+  /** Arrow keys, Home and End move between tabs (WAI-ARIA tabs pattern). */
+  tabKeys(e: KeyboardEvent): void {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    const tabs = [...(e.currentTarget as HTMLElement).querySelectorAll<HTMLElement>('[role="tab"]')];
+    const i = tabs.indexOf(document.activeElement as HTMLElement); if (i < 0) return;
+    const n = e.key === 'Home' ? 0 : e.key === 'End' ? tabs.length - 1 : (i + (e.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+    e.preventDefault(); tabs[n].click(); tabs[n].focus();
+  }
 
   syncLabel = computed(() => {
     const a = this.agent();
@@ -490,6 +498,14 @@ export class AgentDetailComponent implements OnInit, OnDestroy {
   turnLabel = computed(() => (this.meta()?.engines?.turn_detectors || []).find((t: any) => t.id === this.engine().turn_detector)?.label || 'Model default');
   /** First clause of a metric, for the small chips on the preset tiles. */
   short(x: string): string { return String(x).split(/ \(|;| per call/)[0]; }
+  /** '$0.032 per call min (Rs 2.77)' -> '₹2.77 / min' for the preset tiles. */
+  perMin(cost?: string): string { const m = cost?.match(/Rs\s*([\d.]+)/); return m ? `₹${m[1]} / min` : ''; }
+  /** The models in use, in one line: 'Saaras V4 · Claude Haiku 4.5 · Bulbul v3'. */
+  engineLine = computed(() => {
+    const e = this.engine();
+    const name = (kind: string, id?: string) => this.modelLabel(kind, id).split(' · ')[0].replace(/\s*\(.*?\)/g, '');
+    return e.mode === 's2s' ? name('s2s', e.s2s) : [name('stt', e.stt), name('llm', e.llm), name('tts', e.tts)].join(' · ');
+  });
   pickPreset(key: string): void {
     const pr = this.presets().find((x) => x.key === key);
     // Custom keeps the models already in use, so nothing jumps; the pickers just open.

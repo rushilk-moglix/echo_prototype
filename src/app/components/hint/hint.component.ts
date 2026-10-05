@@ -31,8 +31,8 @@ let uid = 0;
   `,
   styles: [`
     :host { display: inline-flex; vertical-align: middle; }
-    .h-i { display: inline-flex; margin-left: 2px; padding: 2px; color: var(--ds-text-placeholder); cursor: help; border-radius: 50%; }
-    .h-i:hover, .h-i[aria-expanded="true"] { color: var(--ds-text); }
+    .h-i { display: inline-flex; margin: -3.5px -3.5px -3.5px -1.5px; padding: 5.5px; color: var(--ds-text-placeholder); cursor: help; border-radius: 50%; transition: color .12s ease, background-color .12s ease; } /* 24 px target, same footprint */
+    .h-i:hover, .h-i[aria-expanded="true"] { color: var(--ds-text); background: var(--ds-hover); }
     .h-i:focus-visible { outline: 2px solid var(--ds-focus, currentColor); outline-offset: 1px; }
     .h-i svg { fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; }
     .h-i .d { fill: currentColor; stroke: none; }

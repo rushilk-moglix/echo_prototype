@@ -52,7 +52,7 @@ import { IconComponent } from '../icon/icon.component';
   `,
   styles: [`
     :host { display: inline-flex; }
-    .sr-link { display: inline-flex; gap: 4px; align-items: center; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; padding: 2px 4px; border-radius: 6px; }
+    .sr-link { display: inline-flex; gap: 4px; align-items: center; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 12px; cursor: pointer; padding: 2px 6px; min-height: 24px; border-radius: 6px; }
     .sr-link:hover { color: var(--ds-accent-fg); background: var(--red-wash); }
     .sr { max-width: 860px; width: calc(100vw - 32px); }
     .sr-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }

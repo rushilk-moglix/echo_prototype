@@ -63,10 +63,12 @@
       <div class="card" style="margin: 0">
         <div class="card-head">
           <div class="card-title">
-            <button [class]="'tab' + (tab() === 'prompt' ? ' on' : '')" (click)="tab.set('prompt')">Prompt</button>
-            <button [class]="'tab' + (tab() === 'inputs' ? ' on' : '')" (click)="tab.set('inputs')">Call data ({{ inputs().length }})</button>
-            <button [class]="'tab' + (tab() === 'outputs' ? ' on' : '')" (click)="tab.set('outputs')">Answers ({{ outputs().length }})</button>
-            <button [class]="'tab' + (tab() === 'settings' ? ' on' : '')" (click)="tab.set('settings')">Settings</button>
+            <span role="tablist" aria-label="Agent" class="tablist" (keydown)="tabKeys($event)">
+              <button role="tab" [attr.aria-selected]="tab() === 'prompt'" [attr.tabindex]="tab() === 'prompt' ? 0 : -1" [class]="'tab' + (tab() === 'prompt' ? ' on' : '')" (click)="tab.set('prompt')">Prompt</button>
+              <button role="tab" [attr.aria-selected]="tab() === 'inputs'" [attr.tabindex]="tab() === 'inputs' ? 0 : -1" [class]="'tab' + (tab() === 'inputs' ? ' on' : '')" (click)="tab.set('inputs')">Call data <span class="tab-n">{{ inputs().length }}</span></button>
+              <button role="tab" [attr.aria-selected]="tab() === 'outputs'" [attr.tabindex]="tab() === 'outputs' ? 0 : -1" [class]="'tab' + (tab() === 'outputs' ? ' on' : '')" (click)="tab.set('outputs')">Answers <span class="tab-n">{{ outputs().length }}</span></button>
+              <button role="tab" [attr.aria-selected]="tab() === 'settings'" [attr.tabindex]="tab() === 'settings' ? 0 : -1" [class]="'tab' + (tab() === 'settings' ? ' on' : '')" (click)="tab.set('settings')">Settings</button>
+            </span>
           </div>
           @if (tab() === 'prompt') {
             <div class="seg" role="group" aria-label="Prompt view">
@@ -87,7 +89,7 @@
                 @for (sec of sections(); track sec.id || $index; let i = $index) {
                   <div [class]="'section-box' + (isGenerated(sec) ? ' generated' : '') + (sec.enabled === false ? ' off' : '')">
                     <div class="section-head">
-                      <input class="input section-title" [ngModel]="sec.title" (ngModelChange)="patchSection(i, {title: $event})" placeholder="Section name" [disabled]="isGenerated(sec)" />
+                       <input class="input section-title" [attr.aria-label]="'Section ' + (i + 1) + ' name'" [ngModel]="sec.title" (ngModelChange)="patchSection(i, {title: $event})" placeholder="Section name" [disabled]="isGenerated(sec)" />
                       @if (isGenerated(sec)) {
                         <span class="chip out">{{ sec.kind === 'input' ? 'auto · call data' : 'auto · answers' }}</span>
                       }
@@ -112,9 +114,9 @@
                         @if (!!(sec.body || '').trim()) { <b>Edited.</b> Kept as you typed it. Refresh adds or removes field lines only. }
                         @else { Built from the {{ sec.kind === 'input' ? 'call data' : 'answers' }}. Type to replace it. }
                       </div>
-                      <textarea class="section-body mono" [value]="sectionValue(sec)" (input)="patchSection(i, {body: $any($event.target).value})" [spellcheck]="false" [placeholder]="generatedError() ? 'Error: ' + generatedError() : 'No fields yet.'"></textarea>
+                      <textarea class="section-body mono" [attr.aria-label]="(sec.title || 'Section') + ' (generated)'" [value]="sectionValue(sec)" (input)="patchSection(i, {body: $any($event.target).value})" [spellcheck]="false" [placeholder]="generatedError() ? 'Error: ' + generatedError() : 'No fields yet.'"></textarea>
                     } @else {
-                      <textarea class="section-body mono" [value]="sec.body || ''" (input)="patchSection(i, {body: $any($event.target).value})" [spellcheck]="false" placeholder="# HEADING&#10;&#10;What the agent should do…"></textarea>
+                      <textarea class="section-body mono" [attr.aria-label]="(sec.title || 'Section ' + (i + 1)) + ' text'" [value]="sec.body || ''" (input)="patchSection(i, {body: $any($event.target).value})" [spellcheck]="false" placeholder="# HEADING&#10;&#10;What the agent should do…"></textarea>
                     }
                   </div>
                 }
@@ -361,67 +363,38 @@
             </section>
 
             <section class="set-sec">
-              <div class="set-title">Voice and brain <app-guide [topic]="engine().mode === 's2s' ? 'preset_natural' : 'preset_pipeline'"></app-guide></div>
-              <div class="preset-row" role="radiogroup" aria-label="Engine preset">
+              <div class="set-title">Voice <app-guide [topic]="engine().mode === 's2s' ? 'preset_natural' : 'preset_pipeline'"></app-guide></div>
+              <!-- Pick a preset; the exact models, backups and measured figures sit in Details for those who want them. -->
+              <div class="preset-row" role="radiogroup" aria-label="Voice preset">
                 @for (pr of presets(); track pr.key) {
                   <button type="button" role="radio" [attr.aria-checked]="engine().preset === pr.key" [class]="'preset' + (engine().preset === pr.key ? ' on' : '')" (click)="pickPreset(pr.key)" [title]="pr.meta">
                     <span class="preset-name">{{ pr.label }}</span>
                     <span class="preset-sub">{{ pr.sub }}</span>
-                    @if (pr.metrics) {
-                      <span class="preset-metrics">
-                        <span class="pm" [title]="'Latency: ' + pr.metrics.latency"><app-icon name="timer" [size]="12"></app-icon>{{ short(pr.metrics.latency) }}</span>
-                        <span class="pm" [title]="'Cost: ' + pr.metrics.cost"><app-icon name="gauge" [size]="12"></app-icon>{{ short(pr.metrics.cost) }}</span>
-                      </span>
-                    }
+                    @if (perMin(pr.metrics?.cost)) { <span class="preset-cost">{{ perMin(pr.metrics?.cost) }}</span> }
                   </button>
                 }
               </div>
 
-              <!-- The exact models in use, always visible; editable once Custom is chosen. -->
-              <div class="engine-box">
-                @if (engine().preset !== 'custom') {
-                  <div class="engine-sum">
-                    @if (engine().mode === 's2s') {
-                      <span class="eng-step"><app-icon name="wave" [size]="14"></app-icon><span class="row-sub">Voice model</span><b>{{ modelLabel('s2s', engine().s2s) }}</b></span>
-                    } @else {
-                      <span class="eng-step"><app-icon name="ear" [size]="14"></app-icon><span class="row-sub">Listens</span><b>{{ modelLabel('stt', engine().stt) }}</b>@if (engine().stt_fallback) { <span class="eng-fb" title="Fallback">then {{ modelLabel('stt', engine().stt_fallback) }}</span> }</span>
-                      <app-icon name="chevronRight" [size]="14" class="eng-arrow"></app-icon>
-                      <span class="eng-step"><app-icon name="brain" [size]="14"></app-icon><span class="row-sub">Thinks</span><b>{{ modelLabel('llm', engine().llm) }}</b>@if (engine().fallback) { <span class="eng-fb" title="Fallback">then {{ modelLabel('llm', engine().fallback) }}</span> }</span>
-                      <app-icon name="chevronRight" [size]="14" class="eng-arrow"></app-icon>
-                      <span class="eng-step"><app-icon name="speak" [size]="14"></app-icon><span class="row-sub">Speaks</span><b>{{ modelLabel('tts', engine().tts) }}</b>@if (engine().tts_fallback) { <span class="eng-fb" title="Fallback">then {{ modelLabel('tts', engine().tts_fallback) }}</span> }</span>
-                    }
-                    <button type="button" class="btn btn-sm" style="margin-left: auto" (click)="customise()">Change models</button>
-                  </div>
-                  @if (presetMetrics(); as m) {
-                    <dl class="eng-metrics">
-                      <div><dt><app-icon name="timer" [size]="12"></app-icon> Latency</dt><dd>{{ m.latency }}</dd></div>
-                      <div><dt><app-icon name="speak" [size]="12"></app-icon> Humanness</dt><dd>{{ m.humanness }}</dd></div>
-                      <div><dt><app-icon name="ear" [size]="12"></app-icon> Accuracy</dt><dd>{{ m.accuracy }}</dd></div>
-                      <div><dt><app-icon name="gauge" [size]="12"></app-icon> Cost</dt><dd>{{ m.cost }}</dd></div>
-                    </dl>
-                    <div class="row-sub eng-note">Turn detection: {{ turnLabel() }} · Realtime alternative: {{ engine().realtime_alt ? modelLabel('s2s', engine().realtime_alt) : 'none' }} <app-hint text="Prices are from vendor pricing pages checked 1 Oct 2026; latency ranges marked estimate are to be measured in the pilot. Sources are in Echo-Technical-Analysis, Voice_Presets."></app-hint></div>
+              @if (engine().preset === 'custom') {
+                <div class="set-grid">
+                  <label class="field"><span class="field-label">How it talks</span>
+                    <select class="select" [ngModel]="engine().mode" (ngModelChange)="setMode2($event)">
+                      <option value="s2s">One voice model</option>
+                      <option value="pipeline">Listen, think, speak</option>
+                    </select></label>
+                  @if (engine().mode === 's2s') {
+                    <label class="field"><span class="field-label">Voice model</span>
+                      <select class="select" [ngModel]="engine().s2s" (ngModelChange)="patchEngine({ s2s: $event }); fixVoice()">@for (m of models('s2s'); track m.id) { <option [value]="m.id">{{ m.label }} · {{ m.vendor }}</option> }</select></label>
+                  } @else {
+                    <label class="field"><span class="field-label">Listens with</span>
+                      <select class="select" [ngModel]="engine().stt" (ngModelChange)="patchEngine({ stt: $event })">@for (m of models('stt'); track m.id) { <option [value]="m.id">{{ m.label }} · {{ m.vendor }}</option> }</select></label>
+                    <label class="field"><span class="field-label">Thinks with</span>
+                      <select class="select" [ngModel]="engine().llm" (ngModelChange)="patchEngine({ llm: $event })">@for (m of models('llm'); track m.id) { <option [value]="m.id">{{ m.label }} · {{ m.vendor }}</option> }</select></label>
+                    <label class="field"><span class="field-label">Speaks with</span>
+                      <select class="select" [ngModel]="engine().tts" (ngModelChange)="patchEngine({ tts: $event }); fixVoice()">@for (m of models('tts'); track m.id) { <option [value]="m.id">{{ m.label }} · {{ m.vendor }}</option> }</select></label>
                   }
-                } @else {
-                  <div class="set-grid">
-                    <label class="field"><span class="field-label">How it talks <app-hint text="One voice model hears and speaks directly. Listen, think, speak uses three separate models you choose."></app-hint></span>
-                      <select class="select" [ngModel]="engine().mode" (ngModelChange)="setMode2($event)">
-                        <option value="s2s">One voice model</option>
-                        <option value="pipeline">Listen, think, speak</option>
-                      </select></label>
-                    @if (engine().mode === 's2s') {
-                      <label class="field"><span class="field-label">Voice model</span>
-                        <select class="select" [ngModel]="engine().s2s" (ngModelChange)="patchEngine({ s2s: $event }); fixVoice()">@for (m of models('s2s'); track m.id) { <option [value]="m.id">{{ m.label }} · {{ m.vendor }}</option> }</select></label>
-                    } @else {
-                      <label class="field"><span class="field-label">Listens with <app-hint text="Speech to text: turns the caller's voice into text."></app-hint></span>
-                        <select class="select" [ngModel]="engine().stt" (ngModelChange)="patchEngine({ stt: $event })">@for (m of models('stt'); track m.id) { <option [value]="m.id">{{ m.label }} · {{ m.vendor }}</option> }</select></label>
-                      <label class="field"><span class="field-label">Thinks with <app-hint text="Language model: decides what to say, following the prompt."></app-hint></span>
-                        <select class="select" [ngModel]="engine().llm" (ngModelChange)="patchEngine({ llm: $event })">@for (m of models('llm'); track m.id) { <option [value]="m.id">{{ m.label }} · {{ m.vendor }}</option> }</select></label>
-                      <label class="field"><span class="field-label">Speaks with <app-hint text="Text to speech: turns the reply into the agent's voice."></app-hint></span>
-                        <select class="select" [ngModel]="engine().tts" (ngModelChange)="patchEngine({ tts: $event }); fixVoice()">@for (m of models('tts'); track m.id) { <option [value]="m.id">{{ m.label }} · {{ m.vendor }}</option> }</select></label>
-                    }
-                  </div>
-                }
-              </div>
+                </div>
+              }
 
               <div class="set-grid">
                 <label class="field">
@@ -432,6 +405,32 @@
                   </select>
                 </label>
               </div>
+
+              @if (engine().preset !== 'custom') {
+                <details class="eng-more">
+                  <summary><span class="row-sub">Uses</span> {{ engineLine() }} <span class="eng-more-k">Details</span></summary>
+                  <div class="eng-more-body">
+                    <ul class="eng-list">
+                      @if (engine().mode === 's2s') {
+                        <li><span>Voice model</span><b>{{ modelLabel('s2s', engine().s2s) }}</b></li>
+                      } @else {
+                        <li><span>Listens</span><b>{{ modelLabel('stt', engine().stt) }}</b>@if (engine().stt_fallback) { <i>backup {{ modelLabel('stt', engine().stt_fallback) }}</i> }</li>
+                        <li><span>Thinks</span><b>{{ modelLabel('llm', engine().llm) }}</b>@if (engine().fallback) { <i>backup {{ modelLabel('llm', engine().fallback) }}</i> }</li>
+                        <li><span>Speaks</span><b>{{ modelLabel('tts', engine().tts) }}</b>@if (engine().tts_fallback) { <i>backup {{ modelLabel('tts', engine().tts_fallback) }}</i> }</li>
+                      }
+                      <li><span>Turn taking</span><b>{{ turnLabel() }}</b></li>
+                      @if (presetMetrics(); as m) {
+                        <li><span>Delay</span><b>{{ m.latency }}</b></li>
+                        <li><span>Cost</span><b>{{ m.cost }}</b></li>
+                      }
+                    </ul>
+                    <div class="eng-more-foot">
+                      <span class="row-sub">Prices from vendor pages, 1 Oct 2026. Backups take over within 2.5 s.</span>
+                      <button type="button" class="btn btn-sm" (click)="customise()">Pick models myself</button>
+                    </div>
+                  </div>
+                </details>
+              }
             </section>
 
             <section class="set-sec">

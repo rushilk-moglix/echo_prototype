@@ -60,6 +60,7 @@ function randomPassword(): string {
                 <select
                   class="input"
                   style="width: auto"
+                  aria-label="Role"
                   [ngModel]="roleDraft[u.user_id] ?? u.role"
                   (ngModelChange)="roleDraft[u.user_id] = $event"
                 >
@@ -80,12 +81,12 @@ function randomPassword(): string {
         </div>
 
         <div class="health-row" style="margin-top: 4px; flex-wrap: wrap; gap: 8px; align-items: center">
-          <input class="input" style="max-width: 220px" [(ngModel)]="inviteEmail" placeholder="email@company.com" />
-          <input class="input" style="max-width: 160px" [(ngModel)]="invitePassword" placeholder="temporary password" />
+          <input class="input" style="max-width: 220px" [(ngModel)]="inviteEmail" placeholder="email@company.com" aria-label="Email to invite" />
+          <input class="input" style="max-width: 160px" [(ngModel)]="invitePassword" placeholder="temporary password" aria-label="Temporary password" />
           <button class="btn btn-sm" (click)="invitePassword = generatedPassword()" title="Fill a random password">
             Generate
           </button>
-          <select class="input" style="width: auto" [(ngModel)]="inviteRole">
+          <select class="input" style="width: auto" [(ngModel)]="inviteRole" aria-label="Role for the invite">
             @for (r of roles; track r) { <option [value]="r">{{ r }}</option> }
           </select>
           <button class="btn btn-sm btn-primary" (click)="invite()" [disabled]="!canInvite() || busy()">
@@ -118,6 +119,7 @@ function randomPassword(): string {
               <input
                 class="input"
                 style="max-width: 240px"
+                aria-label="Group name"
                 [ngModel]="groupDraft[g.group_id] ?? g.name"
                 (ngModelChange)="groupDraft[g.group_id] = $event"
               />
@@ -134,7 +136,7 @@ function randomPassword(): string {
               @for (uid of g.member_ids; track uid) {
                 <span class="tag">
                   {{ emailFor(uid) }}
-                  <button class="tag-remove" (click)="removeMember(g, uid)" title="Remove from group">&times;</button>
+                  <button class="tag-remove" (click)="removeMember(g, uid)" title="Remove from group" aria-label="Remove from group">&times;</button>
                 </span>
               }
               @if (!g.member_ids.length) {
@@ -142,7 +144,7 @@ function randomPassword(): string {
               }
             </div>
             <div class="health-row" style="padding-top: 0">
-              <select class="input" style="width: auto" [(ngModel)]="addMemberDraft[g.group_id]">
+              <select class="input" style="width: auto" [(ngModel)]="addMemberDraft[g.group_id]" aria-label="Add a member to the group">
                 <option value="">Add a user…</option>
                 @for (u of nonMembers(g); track u.user_id) {
                   <option [value]="u.user_id">{{ u.email }}</option>
@@ -163,7 +165,7 @@ function randomPassword(): string {
         }
 
         <div class="health-row" style="margin-top: 4px">
-          <input class="input" style="max-width: 240px" [(ngModel)]="newGroupName" placeholder="New group name" />
+          <input class="input" style="max-width: 240px" [(ngModel)]="newGroupName" placeholder="New group name" aria-label="New group name" />
           <button class="btn btn-sm btn-primary" (click)="createGroup()" [disabled]="!newGroupName.trim() || busy()">
             <app-icon name="plus" [size]="12"></app-icon> Create group
           </button>
@@ -174,7 +176,8 @@ function randomPassword(): string {
   styles: [`
     .group-block { border-top: 1px solid var(--line); padding: 10px 0; }
     .group-members { display: flex; flex-wrap: wrap; gap: 6px; padding: 4px 16px 8px; }
-    .tag-remove { border: none; background: none; cursor: pointer; margin-left: 4px; color: inherit; font-size: 13px; line-height: 1; }
+    .tag-remove { border: none; background: none; cursor: pointer; margin: -4px -6px -4px 2px; min-width: 24px; min-height: 24px; display: inline-grid; place-items: center; border-radius: var(--ds-r-sm); color: inherit; font-size: 14px; line-height: 1; }
+    .tag-remove:hover { background: var(--ds-hover); }
     .agent-admin-toggle { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); white-space: nowrap; cursor: pointer; }
   `],
 })

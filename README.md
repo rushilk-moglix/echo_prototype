@@ -7,8 +7,8 @@ This is a clickable prototype for developers. It matches the local build exactly
 
 ## What to look at
 
-- **Agents**: a compact ready to run checklist, prompt, inputs and answers, voice and model presets (Balanced, High intelligence, Ultra fast,
-  Cost saver) with fallbacks and turn detection, calling flow, retry rules.
+- **Agents**: a compact ready to run checklist, prompt, inputs and answers, a simple Voice section (four presets with a price per
+  minute; models, backups and turn detection under Details), calling flow, retry rules.
 - **Campaigns**: new campaign in one popup (agent, template, sheet), live status by call status, results file
   with every uploaded row back.
 - **Call page**: recording, transcript, answers, dial history.
