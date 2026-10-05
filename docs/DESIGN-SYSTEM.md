@@ -59,6 +59,16 @@ Never write a hex colour in a component. Use a token. Charts that need real colo
 - **Side bar:** icons when closed, opens on hover, pin handle in the middle. Active page is a white (or black) chip with a hairline and a 3 px accent bar.
 - **Agent ready to run checklist (Echo):** one compact line of tick boxes with a count and a small progress bar. A missing item has an amber box; clicking it opens the tab that fixes it. When everything is ticked it reads "Ready to run" in green.
 
+## Interaction rules
+
+- **Dialogs:** use `role="dialog"` (Clarix) or `.modal` (Echo). The shared helper `src/app/core/a11y/dialog-keys.ts` (installed once in the shell or layout) moves focus in on open, keeps Tab inside, closes on Esc (the dialog's Close or Cancel button, else its backdrop) and returns focus to the opener. Centre dialogs with flex or grid; if you centre with a transform, do not animate the transform.
+- **Tabs:** `role="tablist"` with `role="tab"` buttons, `aria-selected`, roving `tabindex` and arrow, Home and End keys. Counts go in a small mono chip.
+- **Navigation:** the active side bar link carries `aria-current="page"`. Clarix has no page header: each page shows its own title; phones get a slim bar with the menu button.
+- **Targets:** every control is at least 24 x 24 px (enlarge with padding and a matching negative margin so the layout does not move).
+- **Fields:** every input, select and textarea has a visible label or an `aria-label`.
+- **Truncation:** text cut with an ellipsis carries the full text in `title`.
+- **Theme:** `index.html` sets the saved or system theme before the app loads, so there is no flash and the sign in page follows the theme.
+
 ## Motion
 
 - Fast and physical: 80 to 220 ms. Press feedback on buttons, a spring on switches and tick boxes, a lift for modals and menus.
