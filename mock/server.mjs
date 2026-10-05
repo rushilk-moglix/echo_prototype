@@ -10,7 +10,7 @@ import { readFileSync } from 'node:fs';
 import { randomUUID, randomInt } from 'node:crypto';
 import { writeXlsx, readXlsx, zip } from './xlsx.mjs';
 import { PI_ORG, PI_ROUTE, PI_USERS, piAgent, piCampaign } from './pi-seed.mjs';
-import { simulate, record, reOutcome, planAttempts, rowTiming } from './ozonetel.mjs';
+import { simulate, record, reOutcome, planAttempts, rowTiming, RETRY } from './ozonetel.mjs';
 import { INTEGRATION_CATALOG } from './integrations.mjs';
 import { OUTCOMES, DEFAULT_RETRY, retryAgain, contactOutcome, setNoReplyUnder } from './outcome.mjs';
 
@@ -255,6 +255,8 @@ const ATTEMPTED = new Set(['dialled', 'calling', 'in_progress', 'failed', 'block
 const OPEN = new Set(['pending', 'queued', 'dialled', 'calling', 'in_progress', 'retry_scheduled']);
 
 function campaignStatus(c) {
+  // Campaign-level failure (system or setup), never because individual calls failed.
+  if (c.failed) return 'failed';
   if (!c.contacts.length) return 'ready';
   if (c.contacts.every((x) => x.status === 'input_validation_failed' || x.reason === 'data_validation_failed')) return 'failed';
   if (c.stopped && !c.contacts.some((x) => x.attempts || HAS_CALL.has(x.status))) return 'cancelled';
@@ -494,6 +496,17 @@ function groupRows(a, rows) {
   }
   return out;
 }
+/** Second and later rows with the same phone (row by row agents): kept, not dialled, shown as Repeated number. */
+function markRepeats(a, contacts) {
+  if (planOf(a).mode === 'group') return contacts;
+  const seen = new Set();
+  for (const x of contacts) {
+    if (x.status !== 'pending' || !x.phone) continue;
+    if (seen.has(x.phone)) Object.assign(x, { status: 'input_validation_failed', reason: 'duplicate_row', validation_error: 'Same phone number as an earlier row' });
+    else seen.add(x.phone);
+  }
+  return contacts;
+}
 function contactFrom(a, g) {
   const first = g.rows[0];
   const plan = planOf(a);
@@ -565,12 +578,16 @@ function rollKind(roll) {
   if (roll < 0.62) return ['answered', 'disconnected_early'];
   return ['answered', 'conversation'];
 }
-const RETRY_DEMO_MS = 20000; // PRD default is 60 minutes; 20 s so a demo sees it move
+let RETRY_DEMO_MS = 20000; // PRD default is 60 minutes; 20 s so a demo sees it move
+// Test hook (mock only): exact Ozonetel results queued per phone number, and short timers, so end to end
+// checks (mock/e2e-status.mjs) are repeatable. Each entry is [kind, result] as in ozonetel.mjs simulate().
+const DIAL_SCRIPT = new Map();
+let WAIT_SCALE = 1;
 function placeCampaignCall(camp, row) {
   if (row.status === 'cancelled' || camp.stopped || camp.paused) return;
   const roll = Math.random();
   if (MODE === 'live') { if (roll < 0.45) return; return connectCall(camp, row, roll > 0.7 ? 'conversation' : 'no_response', null); }
-  const [kind, result] = rollKind(roll);
+  const [kind, result] = DIAL_SCRIPT.get(row.phone)?.shift() || rollKind(roll);
   Object.assign(row, { status: 'calling', reason: null, call_result: null, next_attempt_at: null }); notifyClarix(camp, row);
   const n = (row.attempts_detail ||= []).length + 1;
   const sim = simulate({ kind, result, seed: `${camp.campaign_id}:${row.primary_id}:live${n}:${roll}`, startedAt: nowIso(), did: OZN_CAMPAIGNS[0].did });
@@ -580,19 +597,26 @@ function placeCampaignCall(camp, row) {
   if (kind === 'answered' && att.stream) {
     row.status = 'in_progress'; notifyClarix(camp, row);
     // The callback and the stream end arrive after the talk time; shortened for the demo.
-    return setTimeout(() => { connectCall(camp, row, result, att); finishAttempt(camp, row, att); }, Math.min(att.talk_seconds, 12) * 1000);
+    return setTimeout(() => { connectCall(camp, row, result, att); finishAttempt(camp, row, att); }, Math.min(att.talk_seconds, 12) * 1000 * WAIT_SCALE);
   }
-  setTimeout(() => finishAttempt(camp, row, att), Math.min(att.ring_seconds, 8) * 1000);
+  setTimeout(() => finishAttempt(camp, row, att), Math.min(att.ring_seconds, 8) * 1000 * WAIT_SCALE);
 }
 function finishAttempt(camp, row, att) {
   if (row.status === 'cancelled') return;
   const m = att.mapped;
   const cfg = agentByKey(camp.agent)?.retry || DEFAULT_RETRY;
   const answerRule = cfg.answer_field && (cfg.answer_values || []).map(String).includes(String(row.outputs?.[cfg.answer_field] ?? ''));
-  if (!camp.stopped && (retryAgain(att.outcome, att.attempt, cfg) || (answerRule && att.attempt < (cfg.tries || 1)))) {
+  // PRD-ECHO-11 section 10: never tried again for these reasons, whatever the outcome word says.
+  const neverRetry = RETRY.never_reasons.includes(m.reason);
+  if (!camp.stopped && !neverRetry && (retryAgain(att.outcome, att.attempt, cfg) || (answerRule && att.attempt < (cfg.tries || 1)))) {
     const next = new Date(Date.now() + RETRY_DEMO_MS).toISOString();
     settleRow(camp, row, 'retry_scheduled', { reason: m.reason || m.result, call_result: m.result || null, next_attempt_at: next });
     return setTimeout(() => placeCampaignCall(camp, row), RETRY_DEMO_MS);
+  }
+  // PRD-ECHO-11 section 10: every allowed try used and the line never settled it -> Retry Exhausted,
+  // keeping what the last try was ("Retry exhausted: no answer 3 times"). Answered calls keep Completed.
+  if (!neverRetry && m.status !== 'completed' && retryAgain(att.outcome, 0, cfg) && att.attempt >= (cfg.tries || 1)) {
+    return settleRow(camp, row, 'retry_exhausted', { reason: m.reason || null, last_attempt_status: m.status, last_attempt_reason: m.reason || null, call_result: null });
   }
   settleRow(camp, row, m.status, { call_result: m.result || null, reason: m.reason || null, outputs: row.outputs || {}, call_id: row.call_id, recording_call_id: row.recording_call_id, captured_at: row.captured_at });
 }
@@ -665,11 +689,19 @@ function notifyOne(camp, row, call, over) {
   fetch(`${CLARIX_URL}/__mock/exchange-webhook`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {});
 }
 function dialCampaign(camp) {
+  const a = agentByKey(camp.agent);
+  const flow = OZN_CAMPAIGNS.find((f) => f.name === a?.ozonetel_campaign);
+  const providerOff = flow && integrationsOf(camp.org_id || flow.org_id)?.[flow.provider || 'ozonetel']?.status !== 'connected';
+  if (camp.contacts.length && (!flow || !flow.enabled || providerOff)) {
+    camp.failed = !flow ? 'calling_flow_missing' : !flow.enabled ? 'calling_flow_turned_off' : 'telephony_provider_disconnected';
+    camp.contacts.filter((r) => r.status === 'pending').forEach((r) => settleRow(camp, r, 'cancelled', { reason: 'not_dialled_campaign_failed' }));
+    return 0;
+  }
   const rows = camp.contacts.filter((r) => r.status === 'pending' || r.status === 'dialled');
   rows.forEach((row, i) => {
     row.status = MODE === 'target' ? 'queued' : 'dialled';
     row.dispatched_at = nowIso();
-    setTimeout(() => placeCampaignCall(camp, row), 6000 + i * 2500);
+    setTimeout(() => placeCampaignCall(camp, row), (6000 + i * 2500) * WAIT_SCALE);
   });
   return rows.length;
 }
@@ -1044,7 +1076,9 @@ on('PUT', '/api/agents/:key', ({ res, p, body }) => {
 on('DELETE', '/api/agents/:key', ({ res, p }) => {
   const i = agents.findIndex((a) => a.key === p.key); if (i < 0) return fail(res, 404, 'Agent not found');
   const used = campaigns.filter((c) => c.agent === p.key).length;
-  agents.splice(i, 1);
+  const [gone] = agents.splice(i, 1);
+  // A synced agent tells Clarix it is gone, so Clarix archives its setup instead of showing a dead agent.
+  if (gone.synced_platform === 'clarix') fetch(`${CLARIX_URL}/public/webhooks/exchange/agents`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: gone.key, name: gone.label, deleted: true }) }).catch(() => {});
   json(res, 200, used ? { note: `${used} campaign(s) still reference this agent; their history is kept.` } : {});
 });
 on('PUT', '/api/agents/:key/sections', ({ res, p, body }) => { const a = agentByKey(p.key); if (!a) return fail(res, 404, 'Agent not found'); a.sections = body.sections || []; touch(a); json(res, 200, { agent: a }); });
@@ -1110,12 +1144,19 @@ on('POST', '/api/campaigns', ({ res, body, q }) => {
   const a = agentByKey(body.agent); if (!a) return fail(res, 400, 'Pick an agent');
   const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
   const c = {
-    campaign_id: `${slug(a.label).replace(/_/g, '-')}-${randomUUID().slice(0, 8)}`, name: `${a.label} - ${stamp}`,
+    campaign_id: `${slug(a.label).replace(/_/g, '-')}-${randomUUID().slice(0, 8)}`, name: uniqueName(`${a.label} - ${stamp}`),
     agent: a.key, org_id: orgOf(q), provider: body.provider || a.providers[0], source: 'internal', direction: body.direction || 'outbound',
     description: body.description || '', created_at: nowIso(), contacts: [], clarix_batch_id: null,
   };
   campaigns.push(c); json(res, 201, { campaign_id: c.campaign_id });
 });
+/** Campaign names are unique: a second campaign in the same minute gets (2), (3)... */
+function uniqueName(base) {
+  const taken = new Set(campaigns.map((x) => x.name));
+  if (!taken.has(base)) return base;
+  let n = 2; while (taken.has(`${base} (${n})`)) n++;
+  return `${base} (${n})`;
+}
 on('GET', '/api/campaigns/:id', ({ res, p }) => {
   const c = campaignById(p.id); if (!c) return fail(res, 404, 'Campaign not found');
   const a = agentByKey(c.agent);
@@ -1178,13 +1219,28 @@ on('POST', '/api/campaigns/:id/upload', ({ res, p, q, req, raw: buf }) => {
   const map = form.mapping ? JSON.parse(form.mapping) : Object.fromEntries(proposal.map((m) => [m.column, m.index]));
   const fileRows = data.map((r, i) => fileRow(a, Object.fromEntries(Object.entries(map).filter(([, idx]) => idx !== null && idx !== undefined).map(([k, idx]) => [k, String(r[idx] ?? '').trim()])), i + 1));
   c.file_rows = fileRows.length;
-  c.contacts = groupRows(a, fileRows).map((g) => contactFrom(a, g));
+  c.contacts = markRepeats(a, groupRows(a, fileRows).map((g) => contactFrom(a, g)));
   const dialled = dialCampaign(c);
   json(res, 200, { stored: c.contacts.length, dial: { dialled, ozonetel_campaign: a.ozonetel_campaign } });
 });
 on('POST', '/api/campaigns/:id/dial', ({ res, p }) => {
   const c = campaignById(p.id); if (!c) return fail(res, 404, 'Campaign not found');
   json(res, 200, { dialled: dialCampaign(c), ozonetel_campaign: agentByKey(c.agent)?.ozonetel_campaign || '' });
+});
+// Pause holds every call not yet placed; resume places them again (and any retry that came due while paused).
+on('POST', '/api/campaigns/:id/pause', ({ res, p }) => {
+  const c = campaignById(p.id); if (!c) return fail(res, 404, 'Campaign not found');
+  if (campaignStatus(c) !== 'running') return fail(res, 409, 'Only a running campaign can be paused');
+  c.paused = true; c.contacts.forEach((r) => notifyClarix(c, r));
+  json(res, 200, { status: campaignStatus(c) });
+});
+on('POST', '/api/campaigns/:id/resume', ({ res, p }) => {
+  const c = campaignById(p.id); if (!c) return fail(res, 404, 'Campaign not found');
+  if (!c.paused) return fail(res, 409, 'This campaign is not paused');
+  c.paused = false;
+  const waiting = c.contacts.filter((r) => ['pending', 'queued', 'dialled', 'scheduled'].includes(r.status) || (r.status === 'retry_scheduled' && Date.parse(r.next_attempt_at || 0) <= Date.now()));
+  waiting.forEach((r, i) => setTimeout(() => placeCampaignCall(c, r), (800 + i * 400) * WAIT_SCALE));
+  json(res, 200, { status: campaignStatus(c), resumed: waiting.length });
 });
 // Target backend: Stop ends a campaign. Rows not yet dialled become Cancelled (not dialled).
 on('POST', '/api/campaigns/:id/stop', ({ res, p }) => {
@@ -1207,9 +1263,13 @@ function fileWithAnswers(c) {
     const t = rowTiming(x.attempts_detail || []);
     const base = { call_status: OUTCOMES[contactOutcome(x)]?.label || '', dials: t.attempts || 0, talk_seconds: t.talk_seconds || 0, call_id: x.call_id || '' };
     const items = x.items?.length ? rowsOf(a, x) : [{ row: x.row, values: {}, answer: null }];
+    // A reached call that ended before the agent covered a row (caller hung up early): the row says not covered, never blank.
+    const reached = OUTCOMES[contactOutcome(x)]?.group === 'reached';
+    const notCovered = Object.fromEntries((a?.output_variables.find((o) => o.key === answersKey(a))?.fields || []).filter((f) => f.type === 'enum' && f.options?.includes('not_covered')).map((f) => [f.key, 'not_covered']));
     for (const it of items) {
+      const rowAnswer = it.answer && Object.keys(it.answer).length ? it.answer : x.items?.length && reached ? notCovered : it.answer;
       // Agent answers that share a name with a platform column are prefixed, so the platform call status always wins.
-      const answers = Object.fromEntries([...flat(callOutputs(a, x.outputs)), ...Object.entries(it.answer || {})].map(([k, v]) => [PLATFORM_COLS.has(k) ? `answer_${k}` : k, v]));
+      const answers = Object.fromEntries([...flat(callOutputs(a, x.outputs)), ...Object.entries(rowAnswer || {})].map(([k, v]) => [PLATFORM_COLS.has(k) ? `answer_${k}` : k, v]));
       out.push({ _row: it.row, ...x.context, ...it.values, ...answers, ...base });
     }
   }
@@ -1247,6 +1307,19 @@ on('GET', '/api/campaigns/:id/export.zip', ({ res, p, q }) => {
 
 // Clarix mock pairing: a sheet uploaded in the local Clarix becomes a Clarix-sourced
 // campaign here and is dialled at once, as live.
+// Clarix Stop on a sheet stops the Echo campaign made from it (ECHO-162); Echo's updates then flow back.
+on('POST', '/__mock/clarix-stop', ({ res, body }) => {
+  const c = campaigns.find((x) => x.clarix_batch_id === body.batchId); if (!c) return fail(res, 404, 'No Echo campaign for that sheet');
+  c.stopped = true;
+  let n = 0;
+  for (const r of c.contacts) if (OPEN.has(r.status) && r.status !== 'calling' && r.status !== 'in_progress') { settleRow(c, r, 'cancelled', { reason: 'not_dialled_stopped' }); n++; }
+  json(res, 200, { stopped: n, status: campaignStatus(c) });
+}, { open: true });
+on('POST', '/__mock/dial-script', ({ res, body }) => {
+  for (const [phone, plan] of Object.entries(body.plan || {})) DIAL_SCRIPT.set(String(phone), plan.map((x) => [...x]));
+  if (body.fast) { RETRY_DEMO_MS = 1500; WAIT_SCALE = 0.05; }
+  json(res, 200, { queued: DIAL_SCRIPT.size, retry_ms: RETRY_DEMO_MS });
+}, { open: true });
 on('POST', '/__mock/clarix-batch', ({ res, body }) => {
   const a = agentByKey(body.agent);
   if (!a) return fail(res, 400, `Unknown agent ${body.agent}`);
@@ -1258,7 +1331,9 @@ on('POST', '/__mock/clarix-batch', ({ res, body }) => {
   };
   const rows = (body.rows || []).map((r, i) => ({ ...fileRow(a, { ...(r.context || {}) }, i + 1), ref: r.primary_id, name: r.name, phone: String(r.phone || '').replace(/\D/g, '').slice(-10), bad: null }));
   c.file_rows = rows.length;
-  c.contacts = groupRows(a, rows).map((g) => contactFrom(a, g));
+  c.contacts = markRepeats(a, groupRows(a, rows).map((g) => contactFrom(a, g)));
+  // Rows that will never be dialled (bad data, repeated number) are final now: tell Clarix at once.
+  for (const x of c.contacts) if (x.status === 'input_validation_failed') notifyClarix(c, x);
   campaigns.push(c);
   json(res, 200, { campaign_id: c.campaign_id, dialled: dialCampaign(c) });
 }, { open: true });

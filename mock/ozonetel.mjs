@@ -91,11 +91,16 @@ export function mapAttempt(a) {
   else if (eq(p.CustomerStatus, 'Congestion')) out = { status: 'failed', reason: 'congestion' };
   else if (eq(p.CustomerStatus, 'exception') || eq(p.DialStatus, 'exception')) out = { status: 'failed', reason: 'provider_exception' };
   else if (eq(p.CustomerStatus, 'ISDDisabled')) out = { status: 'failed', reason: 'isd_disabled' };
+  // Rules 14 and 15: only explicit signals; never inferred from patterns.
+  else if (eq(p.CustomerStatus, 'DND', 'Blocked', 'NumberBlocked')) out = { status: 'blocked', reason: eq(p.CustomerStatus, 'DND') ? 'dnd' : 'provider_block' };
+  else if (eq(p.CustomerStatus, 'Rejected', 'Declined', 'CallRejected')) out = { status: 'rejected', reason: 'declined' };
   else if (eq(p.CustomerStatus, 'NoResponse')) out = { status: 'no_answer', reason: 'no_response' };
   else if (eq(p.CustomerStatus, 'ring', 'Dialing') && eq(p.Status, 'NotAnswered')) out = { status: 'no_answer', reason: 'rang_out' };
   else if (eq(p.CustomerStatus, 'NormalUnspecified') && eq(p.Status, 'NotAnswered')) out = { status: 'no_answer', reason: 'normal_unspecified' };
-  else if (eq(p.CustomerStatus, 'not_answered') || eq(p.DialStatus, 'not_answered')) out = { status: 'no_answer', reason: 'not_answered' };
-  else out = { status: 'failed', reason: 'unknown_provider_status' };
+  // DialStatus not_answered only counts when CustomerStatus is empty or says the same: an unknown
+  // CustomerStatus must not be hidden behind the less specific DialStatus (never map unknown to No Answer).
+  else if (eq(p.CustomerStatus, 'not_answered') || (eq(p.DialStatus, 'not_answered') && !String(p.CustomerStatus || '').trim())) out = { status: 'no_answer', reason: 'not_answered' };
+  else { out = { status: 'failed', reason: 'unknown_provider_status' }; anomalies.push(`UNKNOWN_PROVIDER_VALUE Status=${p.Status ?? ''} DialStatus=${p.DialStatus ?? ''} CustomerStatus=${p.CustomerStatus ?? ''}`); }
   // Section 8: duration never creates a status; flag conflicts only.
   if (!s?.connected && eq(p.Status, 'NotAnswered') && secs(p.TalkTime) > 0) anomalies.push('PROVIDER_DATA_CONFLICT');
   return { result: null, reason: null, ...out, anomalies };

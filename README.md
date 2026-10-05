@@ -42,6 +42,12 @@ npm run build:demo       # the static demo, as deployed (output: dist/frontend/b
 Colours, type, components, motion and the checks before merging: `docs/DESIGN-SYSTEM.md`. Paste `docs/ui-audit.js` into the
 browser console to check contrast, clipped text and sideways scroll on any page.
 
+## Checks
+
+- `node mock/e2e-pi.mjs` (Echo): PI end to end against `npm run mock`.
+- `node mock/e2e-status.mjs` (Echo): Ozonetel to Echo to Clarix status run with scripted Ozonetel results; needs the Echo and Clarix mocks running with
+  `ECHO_API_PORT=18090 CLARIX_URL=http://localhost:18081` and `CLARIX_API_PORT=18081 ECHO_URL=http://localhost:18090`.
+
 ## Deploy
 
 Every push to `main` runs `.github/workflows/pages.yml`: `npm ci`, `npm run build:demo`, then GitHub Pages.

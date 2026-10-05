@@ -18,9 +18,11 @@ function ozonetelLine(p) {
   if (c === 'busy') return 'busy';
   if (c === 'invalidnumber' || c === 'invalidnumberformat' || d === 'invalid_number') return 'wrong_number';
   if (c === 'subcriberabsent' || c === 'subscriberabsent' || c === 'noroutedestination') return 'unreachable';
-  if (c === 'isddisabled' || c === 'dnd') return 'blocked';
-  if (c === 'congestion' || c === 'exception' || d === 'exception') return 'network_error';
-  if (['ring', 'dialing', 'noresponse', 'not_answered', 'normalunspecified'].includes(c) || d === 'not_answered') return 'no_answer';
+  if (c === 'dnd' || c === 'blocked' || c === 'numberblocked') return 'blocked';
+  if (c === 'rejected' || c === 'declined' || c === 'callrejected') return 'rejected';
+  if (c === 'isddisabled' || c === 'congestion' || c === 'exception' || d === 'exception') return 'network_error';
+  if (['ring', 'dialing', 'noresponse', 'not_answered', 'normalunspecified'].includes(c) || (!c && d === 'not_answered')) return 'no_answer';
+  // Unknown value: a failure, logged by the status layer (UNKNOWN_PROVIDER_VALUE), never No answer.
   return 'network_error';
 }
 const hangup = (h) => { const v = low(h).replace(/\s+/g, ''); return v === 'userhangup' ? 'caller' : v === 'agenthangup' ? 'agent' : v ? 'network' : null; };
@@ -46,7 +48,7 @@ export const ADAPTERS = {
     ring_seconds: null, talk_seconds: Number(p.Duration || 0), ended_by: low(p.HangupSource) === 'callee' ? 'caller' : null }),
   sip: (p) => ({ picked_up: Number(p.cause) === 16 && Number(p.billsec) > 0, line_result: Number(p.billsec) > 0 ? null : fromQ850(p.cause), ring_seconds: null, talk_seconds: Number(p.billsec || 0), ended_by: null }),
 };
-function fromSip(code) { const c = Number(code); return c === 486 || c === 600 ? 'busy' : c === 404 || c === 484 ? 'wrong_number' : c === 480 ? 'unreachable' : c === 403 || c === 603 ? 'blocked' : c === 408 ? 'no_answer' : 'network_error'; }
+function fromSip(code) { const c = Number(code); return c === 486 || c === 600 ? 'busy' : c === 404 || c === 484 ? 'wrong_number' : c === 480 ? 'unreachable' : c === 603 ? 'rejected' : c === 403 ? 'blocked' : c === 408 ? 'no_answer' : 'network_error'; }
 
 /** Dial facts: the provider's view plus what Echo's own audio stream heard. */
 export function dialFacts(provider, raw, stream) {
@@ -76,8 +78,10 @@ export function outcomeOf(f) {
   if (!f.picked_up) return f.line_result || 'network_error';
   if (!f.agent_joined) return 'call_dropped';
   if (f.voicemail_heard) return 'voicemail';
-  // Too short to be a real conversation: under the workspace's cut-off (5 s by default), or the caller never spoke.
-  if ((f.talk_seconds ?? 0) < NO_REPLY_UNDER || f.caller_spoke_seconds < 1 || !f.caller_turns) return 'no_reply';
+  // No reply: Echo's own audio says the caller never spoke. TalkTime under the cut-off (5 s by default) only
+  // confirms it when the agent also did not finish; duration alone never sets a status.
+  if (f.caller_spoke_seconds < 1 || !f.caller_turns) return 'no_reply';
+  if ((f.talk_seconds ?? 0) < NO_REPLY_UNDER && !f.agent_finished) return 'no_reply';
   if (f.agent_finished) return 'completed';
   if (f.ended_by === 'caller') return 'caller_hung_up';
   return 'call_dropped';
@@ -94,6 +98,7 @@ export const OUTCOMES = {
   unreachable: { label: 'Unreachable', group: 'not_reached' },
   wrong_number: { label: 'Wrong number', group: 'not_reached' },
   blocked: { label: 'Blocked', group: 'not_reached' },
+  rejected: { label: 'Rejected', group: 'not_reached' },
   network_error: { label: 'Network error', group: 'failed' },
   call_dropped: { label: 'Call dropped', group: 'failed' },
   bad_data: { label: 'Bad data', group: 'not_dialled' },
@@ -115,8 +120,8 @@ export function retryAgain(outcome, dialsSoFar, cfg = DEFAULT_RETRY) {
 /** Contact level outcome from its dials and state. */
 export function contactOutcome(row) {
   const s = row.status;
-  if (s === 'input_validation_failed' || row.reason === 'data_validation_failed') return 'bad_data';
   if (row.reason === 'duplicate_row') return 'repeated_number';
+  if (s === 'input_validation_failed' || row.reason === 'data_validation_failed') return 'bad_data';
   if (s === 'cancelled') return row.reason === 'not_dialled_expired' ? 'expired' : 'stopped';
   if (s === 'pending' || s === 'queued' || s === 'dialled' || s === 'scheduled') return 'waiting';
   if (s === 'calling') return 'calling';

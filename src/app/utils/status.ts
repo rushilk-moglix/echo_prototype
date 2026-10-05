@@ -145,9 +145,10 @@ const OUTCOME: Record<string, [string, OutcomeGroup, string, string, boolean]> =
   busy: ['Busy', 'not_reached', 'Line busy or the call was declined', 'Telephony status NotAnswered · customer status Busy', true],
   unreachable: ['Unreachable', 'not_reached', 'Switched off, out of coverage or no route', 'Telephony status NotAnswered · customer status SubcriberAbsent or NoRouteDestination', true],
   wrong_number: ['Wrong number', 'not_reached', 'The number does not exist or is written wrong', 'Customer status InvalidNumber or InvalidNumberFormat, or dial status invalid_number', false],
-  blocked: ['Blocked', 'not_reached', 'DND, international calling off, or barred', 'Customer status ISDDisabled or DND', false],
+  blocked: ['Blocked', 'not_reached', 'DND or barred by the network', 'Customer status DND or an explicit block from the provider (never guessed from patterns)', false],
+  rejected: ['Rejected', 'not_reached', 'The person or network declined the call', 'An explicit decline from the provider (Ozonetel sends none today)', false],
   // failed: our side or the network
-  network_error: ['Network error', 'failed', 'The network or provider failed before it rang', 'Customer status Congestion or exception, dial status exception, or any value not listed here', true],
+  network_error: ['Network error', 'failed', 'The network or provider failed before it rang', 'Customer status Congestion, ISDDisabled or exception, or dial status exception. Any value not listed here is logged as unknown and not tried again', true],
   call_dropped: ['Call dropped', 'failed', 'Picked up, but the line or our agent dropped', 'Telephony status Answered · agent audio never joined, or hung up by System mid call', true],
   // not dialled: never sent to the telephony service
   bad_data: ['Bad data', 'not_dialled', 'Failed the data check, so it was not dialled', 'Not sent to the telephony service', false],
