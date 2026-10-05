@@ -171,14 +171,17 @@ export class AgentDetailComponent implements OnInit, OnDestroy {
 
   checklist = computed(() => {
     const promptChars = this.sections().filter(s => s.enabled !== false && s.kind === 'text').reduce((n, s) => n + (s.body || '').trim().length, 0);
-    return [
-      { label: 'Prompt', ok: promptChars > 0 },
-      { label: 'Call data', ok: this.inputs().some(v => v.key) },
-      { label: 'Answers', ok: this.outputs().some(v => v.key) },
-      { label: 'Calling flow', ok: !!this.settings().ozonetel_campaign && this.flowOn() },
-      ...(this.grouped() ? [{ label: 'Answer for each row', ok: !!this.rowAnswers() }] : []),
+    type Tab = 'prompt' | 'inputs' | 'outputs' | 'settings';
+    const items: { label: string; ok: boolean; tab: Tab; fix: string }[] = [
+      { label: 'Prompt', ok: promptChars > 0, tab: 'prompt', fix: 'Write what the agent says and does' },
+      { label: 'Call data', ok: this.inputs().some(v => v.key), tab: 'inputs', fix: 'Add at least one column the call uses' },
+      { label: 'Answers', ok: this.outputs().some(v => v.key), tab: 'outputs', fix: 'Add at least one answer to collect' },
+      { label: 'Calling flow', ok: !!this.settings().ozonetel_campaign && this.flowOn(), tab: 'settings', fix: 'Pick a calling flow that is turned on in Settings' },
+      ...(this.grouped() ? [{ label: 'Answer for each row', ok: !!this.rowAnswers(), tab: 'outputs' as Tab, fix: 'Add a list answer so each row gets its own result' }] : []),
     ];
+    return items;
   });
+  checkDone = computed(() => this.checklist().filter(c => c.ok).length);
 
   syncLabel = computed(() => {
     const a = this.agent();

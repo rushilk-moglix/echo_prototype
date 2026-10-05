@@ -5,16 +5,16 @@
    ----------------------------------------------------------------------------
    Components keep their short names (--ink, --card, --red...), but every one
    now points at a semantic token, so light and dark come from one place and
-   Echo and Clarix stay in step. Echo's accent is signal red.
+   Echo and Clarix stay in step. Echo's accent is PANTONE 485 C (#DA291C).
    ========================================================================== */
 :root {
-  --ds-accent: #c8202a; --ds-accent-hover: #a3121a; --ds-accent-fg: #b3141d;
-  --ds-accent-soft: #fbecea; --ds-accent-border: #f0c6c2; --ds-on-accent: #ffffff; --ds-focus: #c8202a;
+  --ds-accent: #da291c; --ds-accent-hover: #b51f13; --ds-accent-fg: #b51f13;
+  --ds-accent-soft: #fdeeec; --ds-accent-border: #f6c9c4; --ds-on-accent: #ffffff; --ds-focus: #da291c;
 }
 :root[data-theme="dark"] {
   /* Buttons keep white text on red in both themes; red used as text on dark surfaces is the lighter accent-fg. */
-  --ds-accent: #d9232d; --ds-accent-hover: #c8202a; --ds-accent-fg: #ff8a85;
-  --ds-accent-soft: rgba(229, 72, 77, 0.14); --ds-accent-border: rgba(229, 72, 77, 0.34); --ds-on-accent: #ffffff; --ds-focus: #ff8a85;
+  --ds-accent: #da291c; --ds-accent-hover: #ee3a2c; --ds-accent-fg: #ff8b80;
+  --ds-accent-soft: rgba(218, 41, 28, 0.16); --ds-accent-border: rgba(238, 70, 56, 0.4); --ds-on-accent: #ffffff; --ds-focus: #ff8b80;
 }
 :root {
   /* Surfaces */
@@ -2072,8 +2072,22 @@ b.bad, .bad-text { color: var(--ds-accent-fg); }
 .doc-editor { width: 100%; min-height: 520px; font-family: var(--mono); font-size: 13px; line-height: 1.6; padding: 14px 16px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink); resize: vertical; }
 .doc-editor:focus { outline: none; border-color: var(--line-strong); }
 
-.checklist { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 14px; }
-.checklist .tag { gap: 6px; }
+/* Ready to run checklist: one compact line of tick boxes; a missing item opens the tab that fixes it. */
+.ck { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 14px; margin: 2px 0 12px; padding: 6px 6px 6px 12px; border: 1px solid var(--ds-border); border-radius: var(--ds-r-md); background: var(--ds-surface-sunken); }
+.ck-sum { display: inline-flex; align-items: center; gap: 8px; font-size: var(--ds-fs-sm); color: var(--ds-text-2); white-space: nowrap; }
+.ck-sum b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.ck-bar { position: relative; display: inline-block; width: 44px; height: 4px; border-radius: 4px; background: var(--ds-border); overflow: hidden; }
+.ck-bar > i { position: absolute; inset: 0 auto 0 0; border-radius: 4px; background: var(--ds-warning); transition: width .3s var(--ds-ease); }
+.ck.all .ck-bar > i { background: var(--ds-success); }
+.ck.all .ck-sum b { color: var(--ds-success-fg); }
+.ck-list { display: flex; flex-wrap: wrap; gap: 2px; list-style: none; margin: 0; padding: 0; }
+.ck-item { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 8px 0 6px; border: 0; border-radius: var(--ds-r-sm); background: transparent; font: inherit; font-size: var(--ds-fs-sm); font-weight: 500; color: var(--ds-text); cursor: pointer; transition: background .12s ease; }
+.ck-item:hover { background: var(--ds-hover); }
+.ck-box { width: 14px; height: 14px; flex: 0 0 14px; display: grid; place-items: center; border-radius: 4px; border: 1.5px solid var(--ds-border-input); background: var(--ds-surface); color: transparent; transition: background .15s ease, border-color .15s ease, color .15s ease, transform .2s var(--ds-spring); }
+.ck-item.done { color: var(--ds-text-muted); }
+.ck-item.done .ck-box { background: var(--ds-text); border-color: var(--ds-text); color: var(--ds-bg); }
+.ck-item:not(.done) .ck-box { border-color: var(--ds-warning); }
+.ck-item:active .ck-box { transform: scale(.88); }
 
 .editor-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 16px; align-items: start; }
 .editor-side .card { margin: 0 0 16px; }
@@ -2389,3 +2403,105 @@ details.adv[open] { background: var(--card); border-style: solid; }
 .eng-metrics dt { display: flex; align-items: center; gap: 5px; font-size: var(--ds-fs-xs); font-weight: 600; color: var(--ds-text-muted); text-transform: uppercase; letter-spacing: .06em; font-family: var(--ds-mono); }
 .eng-metrics dd { margin: 2px 0 0; font-size: var(--ds-fs-sm); color: var(--ds-text-2); line-height: 1.45; }
 .eng-note { margin-top: 8px; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+
+/* ============================================================================
+   Neo-minimal layer (Oct 2026)
+   White and black pages, Cloud Dancer wells, hairline structure. Micro-maximal
+   details carry meaning: status dots, mono micro labels, big tabular numbers,
+   an accent bar on the active page, and small, fast, physical feedback.
+   Same rules as Clarix's _ds.scss so both products feel like one family.
+   ========================================================================== */
+body { letter-spacing: -0.006em; }
+
+/* Page heading: big, tight, quiet subtitle. */
+.page-title { font-size: 26px; font-weight: 650; letter-spacing: -0.035em; line-height: 1.15; }
+.page-sub { color: var(--ds-text-muted); }
+
+/* Micro label: the one place mono caps are used (card titles, column heads, stat labels, groups). */
+.card-title, .grid-head, .tile-label, .sb-k, .stat-label, .field-eyebrow {
+  font-family: var(--ds-mono); font-size: 11px; font-weight: 500; letter-spacing: 0.07em; text-transform: uppercase; color: var(--ds-text-muted);
+}
+.card-title svg { width: 14px; height: 14px; }
+
+/* Cards: flat, hairline, no shadow. Clickable cards lift a hair on hover. */
+.card, .tile, .stat { box-shadow: none; border-color: var(--ds-border); border-radius: var(--ds-r-lg); background: var(--ds-surface); }
+.card.sunken { background: var(--ds-surface-sunken); border-color: transparent; }
+a.card, .card.click, button.card, a.tile { transition: border-color .15s var(--ds-ease), transform .15s var(--ds-ease), box-shadow .15s var(--ds-ease); }
+a.card:hover, .card.click:hover, button.card:hover, a.tile:hover { border-color: var(--ds-border-strong); transform: translateY(-1px); box-shadow: var(--ds-shadow-sm); }
+.card-head { min-height: 44px; border-bottom-color: var(--ds-border); }
+
+/* Big numbers: the micro-maximal moment of every overview. */
+.stat-value, .tile-value { font-family: var(--ds-font); font-weight: 650; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.stat-value { font-size: 30px; line-height: 1.05; }
+.tile-value { font-size: 22px; }
+.tile-track { height: 4px; background: var(--ds-surface-sunken); }
+
+/* Status: a dot of solid colour before the word; never colour alone. */
+.tag { border-radius: var(--ds-r-sm); font-weight: 550; gap: 6px; padding: 1px 8px 1px 7px; }
+.tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: 0 0 6px; }
+.tag.ok::before { background: var(--ds-success); }
+.tag.bad::before { background: var(--ds-danger); }
+.tag.warn::before { background: var(--ds-warning); }
+.tag.info::before { background: var(--ds-info); }
+.tag.busy::before { background: var(--ds-accent); animation: pulse 1.6s ease-in-out infinite; }
+.tag.muted::before { background: var(--ds-text-disabled); }
+.tag.plain::before, .tag.no-dot::before { display: none; }
+.pill { border-color: var(--ds-border); }
+
+/* Buttons: crisp edge, a soft press, primary with a hairline highlight. */
+.btn { font-weight: 550; border-color: var(--ds-border-strong); box-shadow: var(--ds-shadow-sm); transition: border-color .12s ease, background .12s ease, color .12s ease, transform .08s ease, box-shadow .12s ease; }
+.btn:hover:not(:disabled) { background: var(--ds-surface-sunken); }
+.btn-primary { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 1px 2px rgba(12, 10, 9, 0.18); }
+.btn-primary:hover:not(:disabled) { box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 2px 6px -1px color-mix(in srgb, var(--ds-accent) 45%, transparent); }
+.btn-ghost, .btn:disabled, .btn.disabled { box-shadow: none; }
+.btn-ghost:hover:not(:disabled) { background: var(--ds-hover); }
+.btn .kbd, .kbd { font-family: var(--ds-mono); font-size: 10.5px; padding: 0 5px; min-width: 18px; height: 18px; display: inline-grid; place-items: center; border: 1px solid var(--ds-border); border-bottom-width: 2px; border-radius: 4px; color: var(--ds-text-muted); background: var(--ds-surface); }
+
+/* Fields: white inputs on white, defined by the edge; focus is the accent ring. */
+.input, .select { border-color: var(--ds-border-strong); }
+.input:hover:not(:disabled), .select:hover:not(:disabled) { border-color: var(--ds-border-input); }
+.field-label { color: var(--ds-text-2); font-weight: 550; }
+
+/* Tables: Cloud Dancer head, hairline rows, a quiet hover. */
+.grid-head { background: var(--ds-surface-sunken); border-bottom: 1px solid var(--ds-border); }
+.grid-row { transition: background .12s ease; }
+.grid-row:hover { background: var(--ds-hover); }
+
+/* Tabs: ink underline that slides in; count chips in mono. */
+.tab { transition: color .12s ease, box-shadow .15s var(--ds-ease); }
+.tab.on { color: var(--ds-text); box-shadow: inset 0 -2px 0 var(--ds-text); }
+.seg-n { font-family: var(--ds-mono); font-variant-numeric: tabular-nums; }
+
+/* Modals: lift and fade in, blur behind. */
+.modal-backdrop { background: var(--ds-overlay); backdrop-filter: blur(3px); animation: fadeIn .14s ease both; }
+.modal { border: 1px solid var(--ds-border); box-shadow: var(--ds-shadow-lg); animation: dsLift .18s var(--ds-ease) both; }
+.modal-head { border-bottom-color: var(--ds-border); }
+.modal-title { font-size: 16px; font-weight: 650; letter-spacing: -0.02em; }
+.row-menu-list { animation: dsLift .12s var(--ds-ease) both; box-shadow: var(--ds-shadow-lg); }
+@keyframes dsLift { from { opacity: 0; transform: translateY(4px) scale(.985); } to { opacity: 1; transform: none; } }
+
+/* Switch: springs across. */
+.switch i { transition: background .15s ease; }
+.switch i::after { transition: left .22s var(--ds-spring); }
+
+/* Empty states: a Cloud Dancer well with a dashed edge. */
+.empty { background: var(--ds-surface-sunken); border: 1px dashed var(--ds-border-strong); border-radius: var(--ds-r-lg); }
+
+/* Side bar: Cloud Dancer tint, hairline edge, black or white active chip with the accent bar. */
+.sb { border-right-color: var(--ds-border); }
+.sb-mark { border-radius: 10px; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18); }
+.sb-link { font-weight: 500; transition: background .12s ease, color .12s ease; }
+.sb-link.active { background: var(--ds-surface); color: var(--ds-text); font-weight: 600; box-shadow: 0 0 0 1px var(--ds-border), var(--ds-shadow-sm); }
+.sb-link.active .sb-ico { color: var(--ds-accent); }
+.sb-link.active::before { width: 3px; background: var(--ds-accent); }
+.sb-today { background: var(--ds-surface); border-color: var(--ds-border); }
+.shell:not(.sb-pinned) .sb.open { box-shadow: 20px 0 50px -24px rgba(12, 10, 9, .28); }
+.sb-group .sb-txt { letter-spacing: .1em; }
+.sb-brand small { letter-spacing: .1em; }
+
+/* Toasts and tooltips: the ink chip. */
+.toast { border-radius: var(--ds-r-md); box-shadow: var(--ds-shadow-lg); animation: dsLift .18s var(--ds-ease) both; }
+
+/* Login: a quiet white or black page with one card. */
+.gate { background: var(--ds-bg); background-image: radial-gradient(var(--ds-dot) 1px, transparent 1px); background-size: 18px 18px; }
+.gate-card { border: 1px solid var(--ds-border); box-shadow: var(--ds-shadow-lg); border-radius: var(--ds-r-xl); }

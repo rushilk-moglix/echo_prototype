@@ -7,7 +7,7 @@ This is a clickable prototype for developers. It matches the local build exactly
 
 ## What to look at
 
-- **Agents**: prompt, inputs and answers, voice and model presets (Balanced, High intelligence, Ultra fast,
+- **Agents**: a compact ready to run checklist, prompt, inputs and answers, voice and model presets (Balanced, High intelligence, Ultra fast,
   Cost saver) with fallbacks and turn detection, calling flow, retry rules.
 - **Campaigns**: new campaign in one popup (agent, template, sheet), live status by call status, results file
   with every uploaded row back.
@@ -36,6 +36,11 @@ npm ci
 npm run start:local      # mock backend + dev server, same data as the demo
 npm run build:demo       # the static demo, as deployed (output: dist/frontend/browser)
 ```
+
+## Design system
+
+Colours, type, components, motion and the checks before merging: `docs/DESIGN-SYSTEM.md`. Paste `docs/ui-audit.js` into the
+browser console to check contrast, clipped text and sideways scroll on any page.
 
 ## Deploy
 

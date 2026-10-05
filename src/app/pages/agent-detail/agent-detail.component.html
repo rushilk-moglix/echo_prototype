@@ -42,10 +42,21 @@
 
     @if (error()) { <div class="note bad">{{ error() }}</div> }
 
-    <div class="checklist" aria-label="Setup checklist">
-      @for (c of checklist(); track c.label) {
-        <span [class]="'tag ' + (c.ok ? 'ok' : 'warn')"><app-icon [name]="c.ok ? 'check' : 'alert'" [size]="12"></app-icon> {{ c.label }}</span>
-      }
+    <div class="ck" [class.all]="checkDone() === checklist().length" role="group" aria-label="Ready to run checklist">
+      <span class="ck-sum">
+        <b>{{ checkDone() === checklist().length ? 'Ready to run' : checkDone() + ' of ' + checklist().length + ' ready' }}</b>
+        <i class="ck-bar" aria-hidden="true"><i [style.width.%]="(checkDone() / checklist().length) * 100"></i></i>
+      </span>
+      <ul class="ck-list">
+        @for (c of checklist(); track c.label) {
+          <li>
+            <button type="button" class="ck-item" [class.done]="c.ok" (click)="tab.set(c.tab)" [title]="c.ok ? c.label + ': done' : c.fix" [attr.aria-label]="c.label + (c.ok ? ', done' : ', to do: ' + c.fix)">
+              <span class="ck-box" aria-hidden="true"><svg viewBox="0 0 12 12" width="10" height="10"><path d="M2.5 6.2l2.3 2.3 4.7-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              {{ c.label }}
+            </button>
+          </li>
+        }
+      </ul>
     </div>
 
     <div>
