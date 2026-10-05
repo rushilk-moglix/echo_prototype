@@ -1,0 +1,12 @@
+# Keeps the build context small and stops host artefacts leaking into the image.
+# node_modules especially: copying the host's would defeat `npm ci` and can carry
+# platform-specific binaries that don't run in the container.
+node_modules
+dist
+.angular
+.git
+.gitignore
+Dockerfile
+.dockerignore
+npm-debug.log*
+.DS_Store

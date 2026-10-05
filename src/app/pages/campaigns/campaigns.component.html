@@ -1,0 +1,99 @@
+<div class="page">
+  <div class="page-head">
+    <h1 class="page-title">Campaigns</h1>
+    <div class="page-actions">
+      <button class="btn btn-primary" (click)="creating.set(true)" [disabled]="!agents().length" [title]="agents().length ? 'Pick an agent, drop your list, start calling' : 'Create an agent first'">
+        <app-icon name="plus" [size]="14"></app-icon> New campaign
+      </button>
+    </div>
+  </div>
+
+  @if (error()) { <div class="note bad">{{ error() }}</div> }
+  @if (!storage() && !error()) { <div class="note bad">Campaigns could not be loaded. Try again in a minute.</div> }
+  @if (storage() && !loading() && !agents().length && !error()) {
+    <div class="note">No agents yet. <a class="link" routerLink="/agents">Create an agent</a> to start.</div>
+  }
+  @if (creating()) { <app-new-campaign (closed)="creating.set(false); load()"></app-new-campaign> }
+
+  <div class="card">
+    <div class="toolbar">
+      <input class="input search" [ngModel]="q()" (ngModelChange)="q.set($event)" placeholder="Search campaigns or agents" aria-label="Search campaigns" />
+      <div class="seg" aria-label="Status">
+        <button [class.on]="statusFilter() === 'all'" (click)="statusFilter.set('all')">All {{ campaigns().length }}</button>
+        <button [class.on]="statusFilter() === 'open'" (click)="statusFilter.set('open')">Running {{ openCount() }}</button>
+        <button [class.on]="statusFilter() === 'done'" (click)="statusFilter.set('done')">Finished {{ campaigns().length - openCount() }}</button>
+      </div>
+      <div class="seg" aria-label="Source">
+        <button [class.on]="sourceFilter() === 'all'" (click)="sourceFilter.set('all')">Any source</button>
+        <button [class.on]="sourceFilter() === 'clarix'" (click)="sourceFilter.set('clarix')">From Clarix</button>
+        <button [class.on]="sourceFilter() === 'internal'" (click)="sourceFilter.set('internal')">Made in Echo</button>
+      </div>
+    </div>
+    @if (loading()) {
+      <div class="empty"><div class="empty-title">Loading…</div></div>
+    } @else if (campaigns().length === 0) {
+      <div class="empty">
+        <div class="empty-icon"><app-icon name="megaphone" [size]="18" [strokeWidth]="1.8"></app-icon></div>
+        <div class="empty-title">No campaigns yet</div>
+        <div class="empty-sub">Use New campaign: pick an agent, drop your list, start.</div>
+      </div>
+    } @else {
+      <div class="scroll-x">
+        <div style="min-width: 900px">
+          <div class="grid-head" [style.grid-template-columns]="COLS">
+            <span>Campaign</span><span>Agent</span><span>Progress</span><span>Status</span><span>Run time</span><span>Created</span><span></span>
+          </div>
+          @if (!shown().length) { <div class="card-body row-sub">No campaigns match.</div> }
+          @for (c of shown(); track c.campaign_id; let i = $index) {
+            <div class="grid-row clickable" [style.grid-template-columns]="COLS" [style.animation-delay]="(i < 12 ? i * 20 : 240) + 'ms'" (click)="router.navigate(['/campaigns', c.campaign_id])">
+              <!-- The description replaces the id in the second line when there
+                   is one: an operator scanning this list wants to know which
+                   list a run was, and the id is on the campaign's own page. -->
+              <span style="min-width: 0" [title]="c.description || c.campaign_id">
+                <div class="row-title">
+                  {{ c.name }}
+                  @if (c.source && c.source !== 'internal') {
+                    <span class="tag info" [title]="'Sent from ' + c.source">From {{ c.source === 'clarix' ? 'Clarix' : c.source }}</span>
+                  }
+                </div>
+                <div [class]="c.description ? 'row-sub' : 'row-sub mono'">{{ c.description || c.campaign_id }}</div>
+              </span>
+              <span style="min-width: 0">{{ c.schema?.label || c.agent }}</span>
+              <span style="min-width: 0" [title]="progressTitle(c)">
+                <div class="progress" style="height: 7px">
+                  @for (g of GROUPS; track g.key) { @if (c.by_group?.[g.key]) { <span [class]="'g-' + g.key" [style.width.%]="c.by_group[g.key] / (c.contacts_count || 1) * 100"></span> } }
+                </div>
+                <div class="row-sub" style="margin-top: 4px">{{ c.by_group?.reached || 0 }} reached of {{ c.contacts_count ?? 0 }} calls{{ c.file_rows > c.contacts_count ? ' · ' + c.file_rows + ' rows' : '' }}</div>
+              </span>
+              <span>
+                <span [class]="'tag ' + label(c.status).cls" [title]="label(c.status).hint || ''">{{ label(c.status).label }}</span>
+              </span>
+              <span class="mono row-sub" [title]="c.first_dial_at ? 'First dial to end of last call' : 'Not dialled yet'">{{ c.run_seconds != null ? runTime(c.run_seconds) : '—' }}</span>
+              <span style="color: var(--faint); font-size: 12px">{{ fmtTime(c.created_at) }}</span>
+              <!-- stopPropagation, or these also navigate into the campaign
+                   they act on. -->
+              <span style="display: flex; gap: 2px; justify-content: flex-end" (click)="$event.stopPropagation()">
+                @if (c.dialled_count) {
+                  <a class="icon-btn" [href]="api.campaignResultsUrl(c.campaign_id)" download title="Results file" aria-label="Download results"><app-icon name="results" [size]="14"></app-icon></a>
+                  <a class="icon-btn" [href]="api.campaignExportUrl(c.campaign_id)" download title="All transcripts and recordings (zip)" aria-label="Download transcripts and recordings"><app-icon name="zip" [size]="14"></app-icon></a>
+                }
+                <a class="icon-btn" [routerLink]="['/agents', c.agent]" title="Open the agent" aria-label="Open the agent"><app-icon name="bot" [size]="14"></app-icon></a>
+                <button class="row-del" (click)="deletingAsk.set(c)"
+                        [disabled]="deleting() === c.campaign_id"
+                        [title]="'Delete ' + c.name">
+                  <app-icon name="trash" [size]="13"></app-icon>
+                </button>
+              </span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+@if (deletingAsk(); as d) {
+  <app-confirm [title]="'Delete ' + d.name + '?'"
+    [body]="(d.responses_count ? 'Its ' + d.responses_count + ' call results are deleted with it. ' : '') + 'The uploaded list is removed. This cannot be undone.'"
+    confirmLabel="Delete campaign" [danger]="true" [busy]="deleting() === d.campaign_id" (confirm)="remove(d)" (cancel)="deletingAsk.set(null)"></app-confirm>
+}

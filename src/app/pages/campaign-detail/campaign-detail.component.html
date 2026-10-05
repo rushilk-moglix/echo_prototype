@@ -1,0 +1,123 @@
+@if (!campaign()) {
+  <div class="page">
+    @if (error()) { <div class="note bad">{{ error() }}</div> }
+    @else { <div class="empty"><div class="empty-title">Loading campaign…</div></div> }
+  </div>
+} @else {
+  <div class="page">
+    <div class="page-head">
+      <div style="min-width: 0">
+        <a routerLink="/campaigns" class="crumb"><app-icon name="back" [size]="12"></app-icon> Campaigns</a>
+        <h1 class="page-title" [title]="campaign().campaign_id">{{ campaign().name }}</h1>
+        <p class="page-sub">
+          <span [class]="'tag ' + campStatus().cls" [title]="campStatus().hint || ''">{{ campStatus().label }}</span>
+          · Agent
+          @if (schema()) {
+            <a class="page-link" [routerLink]="['/agents', campaign().agent]" [title]="'Open ' + schema().label">{{ schema().label }}</a>
+          } @else {
+            <span class="mono">{{ campaign().agent }}</span> <span class="tag bad">no longer defined</span>
+          }
+          @if (campaign().source === 'clarix') { · From Clarix }
+        </p>
+        @if (campaign().description) { <p class="page-note">{{ campaign().description }}</p> }
+      </div>
+      <div class="page-actions">
+        <!-- Quick actions: icons with names on hover, so the main action stands out. -->
+        <a class="icon-btn" [href]="api.campaignTemplateUrl(id)" download title="Sheet template" aria-label="Download the sheet template"><app-icon name="file" [size]="16"></app-icon></a>
+        @if ((campaign().dialled_count ?? 0) > 0) {
+          <a class="icon-btn" [href]="api.campaignResultsUrl(id)" download title="Results: your file with outcome and answers per row" aria-label="Download results"><app-icon name="results" [size]="16"></app-icon></a>
+          <button class="icon-btn" (click)="downloadCampaignZip()" [disabled]="busy() === 'exporting'" title="All transcripts and recordings (zip)" aria-label="Download all transcripts and recordings"><app-icon name="zip" [size]="16"></app-icon></button>
+        }
+        @if (!contacts().length) {
+          <button class="btn" (click)="triggerUpload()" [disabled]="!canUpload()" [title]="uploadBlockedReason() || 'Upload your list and start calling'">
+            <app-icon name="upload" [size]="13"></app-icon> {{ busy() === 'checking' ? 'Reading…' : 'Upload list' }}
+          </button>
+        }
+        @if (isOpen()) {
+          <button class="btn btn-stop" (click)="askStop.set(true)" [disabled]="!!busy()"><app-icon name="close" [size]="13"></app-icon> Stop campaign</button>
+        } @else if (pendingCount() > 0) {
+          @if (confirmDial()) {
+            <button class="btn btn-stop" (click)="dial()" [disabled]="!!busy()"><app-icon name="phone" [size]="13"></app-icon> {{ busy() === 'dialling' ? 'Placing calls…' : 'Confirm ' + pendingCount() + ' calls' }}</button>
+          } @else {
+            <button class="btn btn-primary" (click)="confirmDial.set(true)" [disabled]="!!busy()"><app-icon name="phone" [size]="13"></app-icon> Run campaign</button>
+          }
+        }
+      </div>
+    </div>
+
+    <input #inputRef type="file" accept=".xlsx,.xlsm" hidden (change)="pick($event.target.files?.[0])" />
+
+    @if (error()) { <div class="note bad">{{ error() }}</div> }
+    @if (confirmDial()) {
+      <div class="note">This dials <b>{{ pendingCount() }}</b> real numbers and cannot be undone. <button class="btn btn-sm" style="margin-left: 8px" (click)="confirmDial.set(false)">Cancel</button></div>
+    }
+    @if (dialResult()) {
+      <div [class]="dialResult().error ? 'note' : 'note good'">Started {{ dialResult().dialled }} calls{{ dialResult().ozonetel_campaign ? ' on ' + dialResult().ozonetel_campaign : '' }}. Results fill in below as each call ends.</div>
+    }
+    @if (uploadBlockedBanner() && !preview()) { <div class="note bad">{{ uploadBlockedBanner() }}</div> }
+
+    @if (preview()) {
+      @if (preview().grouping?.mode === 'group') {
+        <div class="note">
+          Your file has <b>{{ preview().parsed_rows }}</b> rows. They become <b>{{ preview().grouping.calls }}</b> calls, grouped by
+          <span class="mono">{{ preview().grouping.group_by }}</span>; the biggest call covers {{ preview().grouping.biggest }} rows{{ preview().grouping.split ? ', and ' + preview().grouping.split + ' groups split into more calls' : '' }}.
+        </div>
+      }
+      <app-column-mapping [mapping]="preview().mapping || []" [sheetHeaders]="preview().sheet_headers || []" [sampleRows]="preview().sample_rows || []"
+        [parsedRows]="preview().parsed_rows" [fileName]="preview().file?.name || ''" [busy]="busy() === 'dialling'"
+        (confirm)="commitUpload($event)" (cancel)="preview.set(null)"></app-column-mapping>
+    }
+
+    @if (contacts().length) {
+      <div class="card progress-card">
+        <div class="progress-top">
+          <div><b>{{ doneCount() }}</b><span class="row-sub">&nbsp;of {{ contacts().length }} calls finished{{ grouped() ? ' · ' + (campaign().file_rows || 0) + ' file rows' : '' }}</span></div>
+          <app-guide topic="outcomes"></app-guide>
+          <div class="progress-facts" style="margin-left: auto">
+            <span>Dials <b>{{ dials() }}</b><app-hint text="Every dial placed, retries included."></app-hint></span>
+            <span>Talk time <b>{{ fmtSecs(talkSeconds()) }}</b><app-hint text="Time callers were connected to the agent, across all calls."></app-hint></span>
+            <span>Run time <b>{{ campaign().run_seconds != null ? fmtLong(campaign().run_seconds) : '—' }}</b>{{ isOpen() ? ' so far' : '' }}<app-hint text="From the first dial to the end of the last call."></app-hint></span>
+          </div>
+        </div>
+        <div class="progress" role="img" [attr.aria-label]="progressLabel()">
+          @for (g of groupCounts(); track g.key) { @if (g.count) { <span [class]="'g-' + g.key" [style.width.%]="g.count / contacts().length * 100" [title]="g.label + ': ' + g.count"></span> } }
+        </div>
+      </div>
+    }
+
+    <div class="card">
+      <div class="card-head">
+        <span class="card-title">
+          <button [class]="'tab' + (tab() === 'contacts' ? ' on' : '')" (click)="tab.set('contacts')">Calls</button>
+          @if (hasResults()) { <button [class]="'tab' + (tab() === 'responses' ? ' on' : '')" (click)="tab.set('responses')">Answers</button> }
+        </span>
+        <span class="pill">{{ tab() === 'responses' ? shownResponses().length : shownContacts().length }} shown</span>
+      </div>
+      @if (contacts().length) {
+        <!-- Call status drives everything: one chip per status present, with counts. -->
+        <div class="status-bar" role="group" aria-label="Filter by call status">
+          <button type="button" [class]="'st-chip' + (!outcomeFilter() ? ' on' : '')" (click)="outcomeFilter.set('')"><b>{{ contacts().length }}</b> All</button>
+          @for (o of outcomeCounts(); track o.key) {
+            <button type="button" [class]="'st-chip st-' + o.group + (outcomeFilter() === o.key ? ' on' : '')" (click)="outcomeFilter.set(outcomeFilter() === o.key ? '' : o.key)" [title]="hover(o.key)"><i></i><b>{{ o.count }}</b> {{ o.label }}</button>
+          }
+          <span style="flex: 1"></span>
+          <app-status-reference></app-status-reference>
+        </div>
+        <div class="filter-bar">
+          <label class="search"><app-icon name="search" [size]="14"></app-icon><input class="input" [ngModel]="q()" (ngModelChange)="q.set($event)" placeholder="Search name, number or id" aria-label="Search calls" /></label>
+          @if (filtersOn()) { <button class="btn btn-sm" (click)="clearFilters()"><app-icon name="close" [size]="12"></app-icon> Clear filters</button> }
+        </div>
+      }
+      @if (tab() === 'responses' && hasResults()) {
+        <app-responses-table [rows]="shownResponses()" [outVars]="outVars()" [idLabel]="idLabel()" [campaignId]="id"></app-responses-table>
+      } @else {
+        <app-contacts-browser [rows]="shownContacts()" [campaignId]="id" [grouped]="grouped()" [filtered]="filtersOn()"></app-contacts-browser>
+      }
+    </div>
+  </div>
+
+  @if (askStop()) {
+    <app-confirm title="Stop this campaign?" [body]="'Calls already on the line finish. The ' + stoppable() + ' calls not yet dialled are cancelled and can be run again in a new campaign.'"
+      confirmLabel="Stop campaign" [danger]="true" [busy]="busy() === 'stopping'" (confirm)="stop()" (cancel)="askStop.set(false)"></app-confirm>
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "name": "frontend",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "start:local": "node mock/dev.mjs",
+    "mock": "node mock/server.mjs",
+    "mock:scenario": "node mock/build-scenario.mjs",
+    "build": "ng build",
+    "build:demo": "ng build -c demo && node mock/browser/build-sw.mjs dist/frontend/browser",
+    "watch": "ng build --watch --configuration development"
+  },
+  "prettier": {
+    "printWidth": 100,
+    "singleQuote": true,
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/common": "^20.3.0",
+    "@angular/compiler": "^20.3.0",
+    "@angular/core": "^20.3.0",
+    "@angular/forms": "^20.3.0",
+    "@angular/platform-browser": "^20.3.0",
+    "@angular/router": "^20.3.0",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^20.3.35",
+    "@angular/cli": "^20.3.35",
+    "@angular/compiler-cli": "^20.3.0",
+    "buffer": "^6.0.3",
+    "fflate": "^0.8.3",
+    "typescript": "~5.9.2"
+  }
+}

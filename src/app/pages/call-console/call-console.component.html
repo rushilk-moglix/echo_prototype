@@ -1,0 +1,198 @@
+<div class="page">
+  <div class="page-head">
+    <h1 class="page-title">Call console</h1>
+    <div class="page-actions">
+      <span [class]="'pill' + (live() ? ' live' : '')">
+        <span [class]="'dot' + (live() ? ' live' : '')"></span>
+        {{ live() ? 'Live · ' + clockFn(elapsedSec()) : statusText() }}
+      </span>
+      @if (isPhoneCall()) {
+        <button class="btn btn-primary" (click)="dial()" [disabled]="!agent() || !provider() || !channelReady() || !canDial() || dialing()">
+          <app-icon name="phone" [size]="15"></app-icon>
+          {{ dialing() ? 'Dialling…' : 'Call ' + (e164Phone() || '—') }}
+        </button>
+      } @else if (audio.isLive()) {
+        <button class="btn btn-stop" (click)="hangUp()">
+          <app-icon name="phoneOff" [size]="15"></app-icon> End call
+        </button>
+      } @else {
+        <button class="btn btn-primary" (click)="start()" [disabled]="!agent() || !provider()">
+          <app-icon name="phone" [size]="15"></app-icon> Start call
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (error()) { <div class="note bad">{{ error() }}</div> }
+  @if (isPhoneCall() && !channelReady()) { <div class="note bad">Phone calling is not set up. Use Browser to test.</div> }
+  @if (dialed()) { <div class="note good">Ringing {{ dialed().to }}. Pick up to talk to the agent.</div> }
+
+  <section class="card cc-setup" style="flex: 0 0 auto">
+    <div class="cc-row">
+      <div class="seg" role="group" aria-label="Call from">
+        @for (c of channels(); track c.key) {
+          <button type="button" [class.on]="channelKey === c.key" [disabled]="audio.isLive() || dialing() || !(c.configured ?? telephony()[c.key + '_configured'])"
+            (click)="channelKey = c.key; onChannelChange()"><app-icon [name]="c.key === 'webrtc' ? 'headset' : 'phone'" [size]="13"></app-icon> {{ c.key === 'webrtc' ? 'Browser' : 'Phone' }}</button>
+        }
+      </div>
+      <label class="field cc-agent">
+        <span class="field-label">Agent <app-hint text="The agent's saved prompt, voice and models are used for this test."></app-hint></span>
+        <select class="select" [(ngModel)]="agentKey" name="agent" [disabled]="audio.isLive()" (ngModelChange)="onAgentChange()">
+          @if (agents().length === 0) { <option value="">No agents yet</option> }
+          @for (a of agents(); track a.key) { <option [value]="a.key">{{ a.label }}</option> }
+        </select>
+      </label>
+      @if (isPhoneCall()) {
+        <label class="field">
+          <span class="field-label">Number <app-hint text="Your phone. It rings from the agent's calling line."></app-hint></span>
+          <input class="input" [(ngModel)]="phoneRaw" name="phone" [disabled]="dialing()" placeholder="10 digit mobile" inputmode="tel" />
+        </label>
+      }
+      <div [class]="'meter' + (audio.isLive() ? ' on' : '')" title="Your microphone">
+        <app-icon name="mic" [size]="13"></app-icon>
+        <span class="meter-bars">
+          @for (bar of meterBars; track $index; let i = $index) {
+            <span class="meter-bar"
+              [style.animation-duration]="audio.isLive() ? (0.46 + (i % 4) * 0.11).toFixed(2) + 's' : null"
+              [style.animation-delay]="audio.isLive() ? (i * 0.05).toFixed(2) + 's' : null"></span>
+          }
+        </span>
+      </div>
+    </div>
+    <!-- Call data and voice and model live in small modals, so the console stays one row. -->
+    <div class="cc-chips">
+      @if (inputVars().length > 0) {
+        <button type="button" class="cc-chip" (click)="dataOpen.set(true)" [disabled]="live() || dialing()" title="Values the agent uses for this test call">
+          <app-icon name="list" [size]="13"></app-icon> Call data <b>{{ filledCount() }}/{{ inputVars().length }}</b>
+          @if (missingRequired().length) { <span class="cc-warn" [title]="missingRequired().length + ' required fields are empty; the agent hears not provided'"></span> }
+        </button>
+      }
+      <button type="button" class="cc-chip" (click)="engineOpen.set(true)" [disabled]="audio.isLive()" title="Model, voice and conversation settings for this test call">
+        <app-icon name="sliders" [size]="13"></app-icon> {{ override() ? engineSummary() : 'Agent voice and model' }}
+        @if (override()) { <span class="tag info cc-tag">test only</span> }
+      </button>
+      @if (!isPhoneCall()) { <span class="cc-tip"><app-icon name="headphones" [size]="13"></app-icon> Use headphones</span> }
+    </div>
+  </section>
+
+  @if (outputRows().length > 0) {
+    <section class="card" style="flex: 0 0 auto">
+      <div class="card-head">
+        <span class="card-title"><app-icon name="check" [size]="14"></app-icon> Answers</span>
+        <span class="mono" style="font-size: 11px; color: var(--faint)">
+          {{ live() ? 'reported during the call' : 'final' }}
+        </span>
+      </div>
+      <div class="fields">
+        @for (row of outputRows(); track row.label) {
+          <div class="field">
+            <span class="field-label">{{ row.label }}</span>
+            <span class="mono" [style.color]="row.missing ? 'var(--faint)' : 'var(--ink)'"
+                  style="padding: 6px 0; font-size: 13px; word-break: break-word">{{ row.value }}</span>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <section class="split">
+    <div class="card pane">
+      <div class="card-head">
+        <span class="card-title"><app-icon name="bot" [size]="14"></app-icon> Transcript</span>
+        <div class="legend">
+          <span class="legend-item"><i class="legend-swatch me"></i> {{ isPhoneCall() ? 'caller' : 'you' }}</span>
+          <span class="legend-item"><i class="legend-swatch agent"></i> agent</span>
+          <span class="mono" style="font-size: 11px; color: var(--faint)">{{ turns().length }} turns</span>
+        </div>
+      </div>
+      <div class="pane-scroll" #scrollRef>
+        @if (turns().length === 0) {
+          <div class="empty">
+            <div class="empty-icon"><app-icon name="botSimple" [size]="18" [strokeWidth]="1.8"></app-icon></div>
+            <div class="empty-title">Nothing said yet</div>
+            <div class="empty-sub">The conversation shows here live.</div>
+          </div>
+        } @else {
+          @for (t of turns(); track $index) {
+            <div [class]="'turn no-time' + (t.role === 'user' ? ' me' : '')">
+              <span class="turn-who">{{ t.role === 'user' ? (isPhoneCall() ? 'caller' : 'you') : 'agent' }}</span>
+              <span class="turn-text">{{ t.text }}</span>
+            </div>
+          }
+        }
+      </div>
+      @if (!isPhoneCall() && !audio.isLive() && audio.streamSid()) {
+        <div class="card-body" style="border-top: 1px solid var(--line-soft)">
+          <app-recording [streamSid]="audio.streamSid()!"></app-recording>
+        </div>
+      }
+    </div>
+    <div class="card sunken pane">
+      <div class="card-head">
+        <span class="card-title"><app-icon name="wave" [size]="14"></app-icon> Activity</span>
+      </div>
+      <div class="pane-scroll">
+        @if (events().length === 0) {
+          <div class="event">
+            <span class="event-time">--:--</span><span class="event-dot info"></span>
+            <div><div class="event-name">Waiting</div><div class="event-detail">Start a call to see events</div></div>
+          </div>
+        } @else {
+          @for (e of events(); track $index) {
+            <div class="event">
+              <span class="event-time">{{ e.time }}</span><span [class]="'event-dot ' + e.tone"></span>
+              <div style="min-width: 0"><div class="event-name">{{ e.name }}</div><div class="event-detail">{{ e.detail }}</div></div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+  </section>
+
+  @if (dataOpen()) {
+    <div class="modal-backdrop" (click)="dataOpen.set(false)">
+      <div class="modal cc-modal" role="dialog" aria-label="Call data" (click)="$event.stopPropagation()">
+        <div class="modal-head cc-mhead">
+          <div class="modal-title">Call data <app-hint text="Values for this test call only. Nothing is saved. Empty required fields reach the agent as not provided."></app-hint></div>
+          <span class="cc-mtools">
+            <button class="btn btn-sm" (click)="fillSamples()">Fill samples</button>
+            <button class="btn btn-sm btn-ghost" (click)="clearInputs()">Clear</button>
+          </span>
+        </div>
+        <div class="modal-body cc-fields">
+          @for (v of inputVars(); track v.key) {
+            <label class="field">
+              <span class="field-label cc-var" [title]="v.key">
+                <span>{{ niceKey(v.key) }}</span>
+                <span class="chip mono">{{ v.type || 'text' }}</span>
+                @if (v.required !== false) { <span style="color: var(--red)">*</span> }
+                @if (v.share_on_call === false) { <span class="chip" title="The agent knows it but never says it">not spoken</span> }
+              </span>
+              <input class="input" [(ngModel)]="inputValues[v.key]" [name]="'iv_' + v.key" [placeholder]="v.sample || v.key" />
+            </label>
+          }
+        </div>
+        <div class="modal-foot"><span class="row-sub" style="margin-right: auto">{{ filledCount() }} of {{ inputVars().length }} filled</span><button class="btn btn-primary" (click)="dataOpen.set(false)">Done</button></div>
+      </div>
+    </div>
+  }
+
+  @if (engineOpen()) {
+    <div class="modal-backdrop" (click)="engineOpen.set(false)">
+      <div class="modal cc-modal cc-engine" role="dialog" aria-label="Voice and model" (click)="$event.stopPropagation()">
+        <div class="modal-head cc-mhead">
+          <div class="modal-title">Voice and model</div>
+          <label class="ep-override"><span class="switch"><input type="checkbox" [checked]="override()" (change)="override.set($any($event.target).checked)" /><i></i></span> Change for this test <app-hint text="Off: the call uses the agent's saved voice and models. On: these settings apply to this test call only; the agent is not changed."></app-hint></label>
+        </div>
+        <div class="modal-body" [class.cc-off]="!override()">
+          <app-engine-panel [catalog]="catalog()" [value]="engine()" (valueChange)="engine.set($event)"></app-engine-panel>
+        </div>
+        <div class="modal-foot">
+          <button class="btn btn-ghost" (click)="resetEngine()" [disabled]="!override()">Reset</button>
+          <span style="flex: 1"></span>
+          <button class="btn btn-primary" (click)="engineOpen.set(false)">Done</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

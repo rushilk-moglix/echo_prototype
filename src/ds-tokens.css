@@ -1,0 +1,122 @@
+/* ============================================================================
+   Cognilix design tokens: shared by Echo and Clarix
+   ----------------------------------------------------------------------------
+   One semantic layer for both products. Components use these names only; the
+   product files map their older variable names onto them and set the accent
+   (Echo red, Clarix violet). Light is warm paper and ink; dark is warm black
+   with a real surface ladder (bg < sunken < surface < raised), not an inverse.
+   Contrast (checked): text 15:1+, secondary 9:1+, muted 5.5:1+, placeholder
+   4.7:1+ on every surface, input borders 3:1+, status text 5.5:1+, in both themes.
+   Keep this file identical in both repos.
+   ========================================================================== */
+:root {
+  color-scheme: light;
+
+  /* Surfaces, back to front */
+  --ds-bg: #f6f4ef;               /* app background */
+  --ds-surface-sunken: #f1eee7;   /* table heads, wells, empty states */
+  --ds-surface: #ffffff;          /* cards, panels */
+  --ds-surface-raised: #ffffff;   /* modals, popovers, menus (lifted by shadow) */
+  --ds-sidebar: #efece5;
+  --ds-input-bg: #fbfaf7;
+  --ds-input-bg-disabled: #f1eee7;
+  --ds-hover: rgba(22, 19, 15, 0.045);
+  --ds-active: rgba(22, 19, 15, 0.08);
+  --ds-selected: rgba(22, 19, 15, 0.06);
+  --ds-overlay: rgba(22, 19, 15, 0.38);
+  --ds-dot: rgba(22, 19, 15, 0.07);
+
+  /* Text */
+  --ds-text: #16130f;
+  --ds-text-2: #3f3a34;           /* secondary */
+  --ds-text-muted: #635c53;       /* labels, help */
+  --ds-text-placeholder: #6e675e; /* empty fields: lighter than values, 4.7:1+ even on sunken wells */
+  --ds-text-disabled: #948d82;
+  --ds-text-inverse: #ffffff;     /* on dark chips, tooltips */
+
+  /* Lines */
+  --ds-border-subtle: #ece8df;
+  --ds-border: #e2ddd2;
+  --ds-border-strong: #cfc8ba;
+  --ds-border-input: #958d81;     /* 3:1 so a field's edge is visible */
+
+  /* Status: foreground text, soft background, border */
+  --ds-success-fg: #1f6a45; --ds-success-bg: #e7f2ea; --ds-success-border: #b9dcc6; --ds-success: #2e7d57;
+  --ds-warning-fg: #8a520a; --ds-warning-bg: #fbf0dc; --ds-warning-border: #ecd2a4; --ds-warning: #c77a12;
+  --ds-danger-fg: #b3141d;  --ds-danger-bg: #fbecea;  --ds-danger-border: #f0c6c2;  --ds-danger: #d9232d;
+  --ds-info-fg: #3d33a0;    --ds-info-bg: #eeedfa;    --ds-info-border: #cfcbf1;    --ds-info: #6b62d6;
+  --ds-neutral-fg: #4a4540; --ds-neutral-bg: #efece5; --ds-neutral-border: #dcd6ca;
+
+  /* Who is speaking, in transcripts and the waveform; same in both products */
+  --ds-speaker-agent: #3d33a0; --ds-speaker-agent-soft: #cfcbf1;
+  --ds-speaker-caller: #9a5b0b; --ds-speaker-caller-soft: #ecd2a4;
+
+  /* Tooltip (dark chip in light mode, light chip in dark mode) */
+  --ds-tooltip-bg: #1c1a17;
+  --ds-tooltip-text: #f6f4ef;
+
+  /* Shape, depth, type, size */
+  --ds-r-xs: 4px; --ds-r-sm: 6px; --ds-r-md: 8px; --ds-r-lg: 12px; --ds-r-xl: 16px; --ds-r-pill: 999px;
+  --ds-shadow-sm: 0 1px 2px rgba(22, 19, 15, 0.06);
+  --ds-shadow-md: 0 1px 2px rgba(22, 19, 15, 0.05), 0 10px 28px -14px rgba(22, 19, 15, 0.2);
+  --ds-shadow-lg: 0 2px 6px rgba(22, 19, 15, 0.06), 0 28px 64px -24px rgba(22, 19, 15, 0.34);
+  --ds-font: 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ds-mono: 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+  --ds-fs-xs: 11px; --ds-fs-sm: 12px; --ds-fs-base: 13px; --ds-fs-md: 14px; --ds-fs-lg: 16px; --ds-fs-xl: 20px; --ds-fs-2xl: 24px;
+  --ds-control: 36px; --ds-control-sm: 30px;
+  --ds-ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+}
+
+:root[data-theme="dark"], :root.dark {
+  color-scheme: dark;
+  --ds-bg: #0f0e0d;
+  --ds-surface-sunken: #141210;
+  --ds-surface: #191715;
+  --ds-surface-raised: #23201d;
+  --ds-sidebar: #141210;
+  --ds-input-bg: #141210;
+  --ds-input-bg-disabled: #1d1a17;
+  --ds-hover: rgba(255, 255, 255, 0.05);
+  --ds-active: rgba(255, 255, 255, 0.09);
+  --ds-selected: rgba(255, 255, 255, 0.07);
+  --ds-overlay: rgba(0, 0, 0, 0.62);
+  --ds-dot: rgba(255, 255, 255, 0.045);
+
+  --ds-text: #f2eee8;
+  --ds-text-2: #d6d0c7;
+  --ds-text-muted: #a39b90;
+  --ds-text-placeholder: #8f877c;
+  --ds-text-disabled: #6f685f;
+  --ds-text-inverse: #16130f;
+
+  --ds-border-subtle: #221f1c;
+  --ds-border: #2c2925;
+  --ds-border-strong: #3d3832;
+  --ds-border-input: #6a645b;
+
+  --ds-success-fg: #6fd39a; --ds-success-bg: rgba(80, 200, 130, 0.12); --ds-success-border: rgba(80, 200, 130, 0.3); --ds-success: #4fb07c;
+  --ds-warning-fg: #f2b45a; --ds-warning-bg: rgba(240, 166, 64, 0.12); --ds-warning-border: rgba(240, 166, 64, 0.3); --ds-warning: #e09a3a;
+  --ds-danger-fg: #ff8a85;  --ds-danger-bg: rgba(229, 72, 77, 0.13);  --ds-danger-border: rgba(229, 72, 77, 0.34);  --ds-danger: #e5484d;
+  --ds-info-fg: #b3adff;    --ds-info-bg: rgba(162, 156, 255, 0.13); --ds-info-border: rgba(162, 156, 255, 0.32); --ds-info: #8e87ff;
+  --ds-neutral-fg: #cfc8be; --ds-neutral-bg: rgba(255, 255, 255, 0.06); --ds-neutral-border: rgba(255, 255, 255, 0.12);
+
+  --ds-speaker-agent: #b3adff; --ds-speaker-agent-soft: rgba(162, 156, 255, 0.32);
+  --ds-speaker-caller: #f2b45a; --ds-speaker-caller-soft: rgba(240, 166, 64, 0.32);
+
+  --ds-tooltip-bg: #f2eee8;
+  --ds-tooltip-text: #16130f;
+
+  --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ds-shadow-md: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -14px rgba(0, 0, 0, 0.7);
+  --ds-shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.45), 0 30px 70px -24px rgba(0, 0, 0, 0.85);
+}
+
+/* Placeholders everywhere use the empty-field colour. */
+::placeholder { color: var(--ds-text-placeholder); opacity: 1; }
+
+/* One focus ring for every interactive element, keyboard only. */
+:focus-visible { outline: 2px solid var(--ds-focus, var(--ds-accent)); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+}
