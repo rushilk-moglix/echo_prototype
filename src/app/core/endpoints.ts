@@ -79,6 +79,20 @@ export const ENDPOINTS = {
   },
 
   metrics: '/api/metrics',
+  /** Reports: the Overview numbers split by anything, the spreadsheet of the same, and reports sent by email. */
+  reports: {
+    summary: '/api/reports/summary',
+    exportXlsx: '/api/reports/export.xlsx',
+    schedules: '/api/report-schedules',
+    schedule: (id: string) => `/api/report-schedules/${seg(id)}`,
+    sendNow: (id: string) => `/api/report-schedules/${seg(id)}/send-now`,
+  },
+  /** Follow ups: contacts that calling alone cannot settle. */
+  followUps: {
+    list: '/api/follow-ups',
+    one: (campaignId: string, contactId: string) => `/api/follow-ups/${seg(campaignId)}/${seg(contactId)}`,
+    callAgain: (campaignId: string, contactId: string) => `/api/follow-ups/${seg(campaignId)}/${seg(contactId)}/call-again`,
+  },
   calls: '/api/calls',
   /** The filtered call log as a spreadsheet — same query params as `calls`. */
   callsReport: '/api/calls/report.xlsx',

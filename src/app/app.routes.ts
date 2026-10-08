@@ -12,6 +12,7 @@ import { CampaignDetailComponent } from './pages/campaign-detail/campaign-detail
 import { CallAnalysisComponent } from './pages/call-analysis/call-analysis.component';
 import { SettingsComponent } from './pages/settings/settings.component';
 import { TeamComponent } from './pages/team/team.component';
+import { FollowUpsComponent } from './pages/follow-ups/follow-ups.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, title: 'Sign in · Echo' },
@@ -28,6 +29,7 @@ export const routes: Routes = [
       { path: 'campaigns', component: CampaignsComponent, title: 'Campaigns · Echo' },
       { path: 'campaigns/:id', component: CampaignDetailComponent, title: 'Campaign · Echo' },
       { path: 'campaigns/:cid/contacts/:pid', component: CallAnalysisComponent, title: 'Call · Echo' },
+      { path: 'follow-ups', component: FollowUpsComponent, title: 'Follow ups · Echo' },
       { path: 'team', component: TeamComponent, title: 'Team · Echo' },
       { path: 'settings', component: SettingsComponent, title: 'Settings · Echo' },
       { path: 'docs', component: DocsComponent, title: 'Documentation · Echo' },

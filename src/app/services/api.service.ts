@@ -147,9 +147,44 @@ export class ApiService {
   webrtcHealth(): Promise<any> {
     return fetch(this.webrtcBase + ENDPOINTS.health).then((r) => r.json());
   }
-  metrics(days = 30): Promise<any> {
-    return this.getJSON(ENDPOINTS.metrics, { days: String(days) });
+  metrics(days = 30, agent = ''): Promise<any> {
+    return this.getJSON(ENDPOINTS.metrics, { days: String(days), agent });
   }
+  // ── Reports and follow ups ─────────────────────────────────
+
+  /** The Overview numbers split by campaign, agent, day or a column of the uploaded files. */
+  reportSummary(params: Record<string, string> = {}): Promise<any> {
+    return this.getJSON(ENDPOINTS.reports.summary, params);
+  }
+  /** The same report as a spreadsheet with five tabs. */
+  reportExportUrl(params: Record<string, string> = {}): string {
+    return this.apiUrl(ENDPOINTS.reports.exportXlsx, params);
+  }
+  reportSchedules(): Promise<any> {
+    return this.getJSON(ENDPOINTS.reports.schedules);
+  }
+  createReportSchedule(body: any): Promise<any> {
+    return this.sendJSON(ENDPOINTS.reports.schedules, 'POST', body);
+  }
+  updateReportSchedule(id: string, body: any): Promise<any> {
+    return this.sendJSON(ENDPOINTS.reports.schedule(id), 'PATCH', body);
+  }
+  deleteReportSchedule(id: string): Promise<any> {
+    return this.sendJSON(ENDPOINTS.reports.schedule(id), 'DELETE');
+  }
+  sendReportNow(id: string): Promise<any> {
+    return this.sendJSON(ENDPOINTS.reports.sendNow(id), 'POST', {});
+  }
+  followUps(state: 'open' | 'done' = 'open'): Promise<any> {
+    return this.getJSON(ENDPOINTS.followUps.list, { state });
+  }
+  updateFollowUp(campaignId: string, contactId: string, body: any): Promise<any> {
+    return this.sendJSON(ENDPOINTS.followUps.one(campaignId, contactId), 'PATCH', body);
+  }
+  followUpCallAgain(campaignId: string, contactId: string, body: any = {}): Promise<any> {
+    return this.sendJSON(ENDPOINTS.followUps.callAgain(campaignId, contactId), 'POST', body);
+  }
+
   calls(params: Record<string, string> = {}): Promise<any> {
     return this.getJSON(ENDPOINTS.calls, params);
   }

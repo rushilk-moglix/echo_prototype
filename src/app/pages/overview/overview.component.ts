@@ -12,6 +12,8 @@ import { HintComponent } from '../../components/hint/hint.component';
 import { StatusReferenceComponent } from '../../components/status-reference/status-reference.component';
 import { GROUPS, outcomeView as ov, statusHover } from '../../utils/status';
 import { fmtNum, fmtSecs } from '../../utils/format';
+import { ReportShareComponent } from '../../components/report-share/report-share.component';
+import { AuthService } from '../../services/auth.service';
 
 /**
  * The dashboard: one funnel ribbon (dialled, reached, completed), one
@@ -28,6 +30,7 @@ import { fmtNum, fmtSecs } from '../../utils/format';
     GuideComponent,
     HintComponent,
     StatusReferenceComponent,
+    ReportShareComponent,
   ],
   template: `
     <div class="page">
@@ -37,9 +40,14 @@ import { fmtNum, fmtSecs } from '../../utils/format';
           @if (metrics()?.active_calls > 0) {
             <span class="pill live"><span class="dot live"></span>{{ metrics().active_calls }} on the line</span>
           }
+          <select class="select ov-agent" [class.on]="!!agent()" [ngModel]="agent()" (ngModelChange)="setAgent($event)" aria-label="Agent" title="Pick one agent to see its own answers">
+            <option value="">All agents</option>
+            @for (a of agents(); track a.key) { <option [value]="a.key">{{ a.label }}</option> }
+          </select>
           <div class="seg" role="group" aria-label="Period">
             @for (w of WINDOWS; track w.days) { <button [class.on]="days() === w.days" (click)="setDays(w.days)">{{ w.label }}</button> }
           </div>
+          <app-report-share [summary]="report()" [days]="days()" [by]="by()" [byLabel]="byLabel()" [workspace]="workspace()" [period]="period() + (agent() ? ' · ' + agentName() : '')" [agent]="agent()" [agents]="agents()"></app-report-share>
         </div>
       </div>
 
@@ -74,6 +82,127 @@ import { fmtNum, fmtSecs } from '../../utils/format';
           }
         </div>
       </div>
+
+
+
+      <!-- Input and why calls did not finish: two layers every agent has, built from field types and one fixed reason list. -->
+      <div class="ly-two">
+        @if (input(); as inp) {
+          <div class="card">
+            <div class="rp-head"><span class="card-title">Input</span><app-hint text="Every uploaded row is checked against the agent's own input fields: required, number, date, phone and choice. Rejected rows are never called. Warnings are called, and are worth fixing in the source file."></app-hint></div>
+            <div class="ly-nums">
+              <span>Rows uploaded<b>{{ inp.rows }}</b></span><span [class.bad]="inp.rejected">Rejected<b>{{ inp.rejected }}</b></span><span [class.warn]="inp.warned">With warnings<b>{{ inp.warned }}</b></span><span>Clean<b>{{ inp.clean }}</b></span>
+            </div>
+            @if (inp.problems.length) {
+              <div class="ly-list">
+                @for (p of inp.problems; track p.label + p.field) { <div class="ly-row"><span class="ly-kind" [class]="'ly-kind ' + p.kind">{{ p.kind === 'reject' ? 'Rejected' : 'Warning' }}</span><span class="ly-what" [title]="p.label">{{ p.label }}@if (p.field) { <small>{{ p.field }}</small> }</span><b>{{ p.rows }}</b></div> }
+              </div>
+            } @else { <div class="ly-ok">Every row passed the checks.</div> }
+          </div>
+        }
+        @if (why()?.reasons?.length) {
+          <div class="card">
+            <div class="rp-head"><span class="card-title">Picked up, not completed</span><app-hint text="Why a call that was picked up did not finish. The same short list for every agent, recorded on the call."></app-hint><span style="flex: 1"></span><span class="row-sub">{{ why().base }} calls</span></div>
+            <div class="ly-why">
+              @for (r of why().reasons; track r.key) { <div class="an-row"><span class="an-v">{{ r.label }}</span><span class="an-bar"><i [style.width.%]="pc(r.count, why().base)"></i></span><b>{{ r.count }}</b></div> }
+            </div>
+            @if (rowsLine(); as rl) {
+              <div class="ly-nums" style="border-top: 1px solid var(--ds-border); border-bottom: 0" title="For agents that cover several rows on one call.">
+                <span>Rows uploaded<b>{{ rl.uploaded }}</b></span><span>On reached calls<b>{{ rl.on_reached }}</b></span><span>Covered<b>{{ rl.covered }}</b></span><span [class.warn]="rl.not_covered">Not covered<b>{{ rl.not_covered }}</b></span>
+              </div>
+            }
+          </div>
+        } @else if (rowsLine(); as rl) {
+          <div class="card">
+            <div class="rp-head"><span class="card-title">Rows</span><app-hint text="For agents that cover several rows on one call: how many uploaded rows were actually covered."></app-hint></div>
+            <div class="ly-nums" style="border-bottom: 0"><span>Rows uploaded<b>{{ rl.uploaded }}</b></span><span>On reached calls<b>{{ rl.on_reached }}</b></span><span>Covered<b>{{ rl.covered }}</b></span><span [class.warn]="rl.not_covered">Not covered<b>{{ rl.not_covered }}</b></span></div>
+          </div>
+        }
+      </div>
+
+      <!-- Answers: only when one agent is chosen, built from that agent's own answer fields. -->
+      @if (agent()) {
+        <div class="card rp-compare">
+          <div class="rp-head"><span class="card-title">Answers</span><app-hint text="What this agent recorded on its calls, taken from its own answer fields. Choices and yes or no answers are counted, numbers are added up, and free text stays in the results file."></app-hint><span style="flex: 1"></span><span class="row-sub">{{ agentName() }}</span></div>
+          @if (answers().length) {
+            <div class="an-grid">
+              @for (a of answers(); track a.key) {
+                <div class="an-item">
+                  <div class="an-k"><span>{{ a.label }}</span><small>{{ a.answered }} {{ a.unit }}</small></div>
+                  @if (a.type === 'number') { <div class="an-num"><b>{{ a.sum }}</b> in total <span>· {{ a.avg }} on average</span></div> }
+                  @else { @for (v of a.values; track v.value) { <div class="an-row"><span class="an-v" [title]="v.value">{{ pretty(v.value) }}</span><span class="an-bar"><i [style.width.%]="pc(v.count, a.answered)"></i></span><b>{{ v.count }}</b></div> } }
+                </div>
+              }
+            </div>
+          } @else { <div class="an-none">No answers to summarise in this period. Choices, yes or no answers and numbers show here once calls complete.</div> }
+        </div>
+      }
+
+      <!-- The same numbers split by campaign, agent, day or any column of the uploaded files. -->
+      <div class="card rp-compare">
+        <div class="rp-head">
+          <span class="card-title">Compare</span><app-hint text="The same numbers split by campaign, agent or day. If your uploaded files have a column whose values repeat, you can split by that too. Pick an agent to see its own answers."></app-hint>
+          <span style="flex: 1"></span>
+          <div class="seg" role="group" aria-label="Compare by">
+            @for (b of bys(); track b.key) { <button [class.on]="by() === b.key" (click)="setBy(b.key)">{{ b.label }}</button> }
+          </div>
+          @if (columns().length) {
+            <select class="select rp-col" [class.on]="isColumn()" [ngModel]="isColumn() ? by() : ''" (ngModelChange)="setBy($event || 'campaign')" aria-label="Compare by a column of your file">
+              <option value="">A column of your file</option>
+              @for (c of columns(); track c.key) { <option [value]="c.key">{{ c.label }}</option> }
+            </select>
+          }
+        </div>
+        @if (!reportRows().length) {
+          <div class="empty" style="padding: 22px"><div class="empty-sub">Nothing to compare in this period yet.</div></div>
+        } @else {
+          <div class="rp-table" role="table" [attr.aria-label]="'Compared by ' + byLabel()">
+            <div class="rp-tr rp-th" role="row"><span role="columnheader">{{ byLabel() }}</span><span role="columnheader">Dialled</span><span role="columnheader">Reached <app-hint text="Share of contacts dialled."></app-hint></span><span role="columnheader">Completed <app-hint text="Share of contacts reached."></app-hint></span><span role="columnheader">Not reached</span><span role="columnheader">Failed</span><span role="columnheader">Follow up <app-hint text="Contacts calling cannot settle: blocked, wrong number, declined, or every try used."></app-hint></span></div>
+            @for (r of reportRows(); track r.key) {
+              <div class="rp-tr" role="row" [class.rp-pick]="by() === 'agent'" [attr.tabindex]="by() === 'agent' ? 0 : null" [attr.title]="by() === 'agent' ? 'See this agent and its answers' : null" (click)="pickRow(r)" (keydown.enter)="pickRow(r)">
+                <span class="rp-name" role="cell" [title]="r.label">{{ rowLabel(r) }}</span>
+                <span class="mono" role="cell">{{ r.dialled }}</span>
+                <span role="cell" class="rp-bar"><i [style.width.%]="pc(r.reached, r.dialled)"></i><b class="mono">{{ r.reached }}</b><small>{{ pc(r.reached, r.dialled) }}%</small></span>
+                <span role="cell" class="rp-bar done"><i [style.width.%]="pc(r.completed, r.reached)"></i><b class="mono">{{ r.completed }}</b><small>{{ pc(r.completed, r.reached) }}%</small></span>
+                <span class="mono" role="cell">{{ r.not_reached }}</span>
+                <span class="mono" role="cell">{{ r.failed }}</span>
+                <span role="cell">@if (r.follow_up) { <a class="rp-follow" (click)="goFollowUps()" (keydown.enter)="goFollowUps()" tabindex="0" title="Open Follow ups">{{ r.follow_up }}</a> } @else { <span class="rp-zero mono">0</span> }</span>
+              </div>
+            }
+            @if ((report()?.rows?.length || 0) > reportRows().length) { <button class="rp-more" (click)="showAll.set(true)">Show all {{ report().rows.length }}</button> }
+          </div>
+        }
+      </div>
+
+      <!-- Paper layout: what Share, PDF prints. Hidden on screen. -->
+      <section class="print-report" aria-hidden="true">
+        <header><h1>Calling report</h1><p>{{ workspace() }} · {{ period() }} · made {{ madeAt() }}</p></header>
+        <div class="pr-tiles">
+          <div><small>Dialled</small><b>{{ rt().dialled || 0 }}</b><span>{{ rt().contacts || 0 }} contacts</span></div>
+          <div><small>Reached</small><b>{{ rt().reached || 0 }}</b><span>{{ pc(rt().reached, rt().dialled) }}% of dialled</span></div>
+          <div><small>Completed</small><b>{{ rt().completed || 0 }}</b><span>{{ pc(rt().completed, rt().reached) }}% of reached</span></div>
+          <div><small>Needs follow up</small><b>{{ rt().follow_up || 0 }}</b><span>a person takes these</span></div>
+        </div>
+        <h2>Call status</h2>
+        <p class="pr-list">@for (o of topOutcomes(); track o.key) { <span>{{ o.label }} <b>{{ o.count }}</b></span> }</p>
+        @if (agent() && answers().length) {
+          <h2>Answers</h2>
+          @for (a of answers(); track a.key) { <p class="pr-list"><b>{{ a.label }}:</b> @if (a.type === 'number') { <span>total <b>{{ a.sum }}</b>, average <b>{{ a.avg }}</b></span> } @else { @for (v of a.values; track v.value) { <span>{{ pretty(v.value) }} <b>{{ v.count }}</b></span> } }</p> }
+        }
+        @if (input(); as inp) { <h2>Input</h2><p class="pr-list"><span>Rows uploaded <b>{{ inp.rows }}</b></span><span>Rejected <b>{{ inp.rejected }}</b></span><span>With warnings <b>{{ inp.warned }}</b></span>@for (p of inp.problems; track p.label + p.field) { <span>{{ p.label }} <b>{{ p.rows }}</b></span> }</p> }
+        @if (why()?.reasons?.length) { <h2>Picked up, not completed</h2><p class="pr-list">@for (r of why().reasons; track r.key) { <span>{{ r.label }} <b>{{ r.count }}</b></span> }</p> }
+        <h2>By {{ byLabel().toLowerCase() }}</h2>
+        <table>
+          <thead><tr><th>{{ byLabel() }}</th><th>Dialled</th><th>Reached</th><th>Completed</th><th>Not reached</th><th>Failed</th><th>Follow up</th></tr></thead>
+          <tbody>@for (r of report()?.rows || []; track r.key) { <tr><td>{{ rowLabel(r) }}</td><td>{{ r.dialled }}</td><td>{{ r.reached }} ({{ pc(r.reached, r.dialled) }}%)</td><td>{{ r.completed }} ({{ pc(r.completed, r.reached) }}%)</td><td>{{ r.not_reached }}</td><td>{{ r.failed }}</td><td>{{ r.follow_up }}</td></tr> }</tbody>
+        </table>
+        <h2>Day by day</h2>
+        <table>
+          <thead><tr><th>Day</th><th>Dialled</th><th>Reached</th><th>Completed</th><th>Not reached</th><th>Failed</th></tr></thead>
+          <tbody>@for (r of report()?.trend || []; track r.day) { <tr><td>{{ dayLabel(r.day) }}</td><td>{{ r.dialled }}</td><td>{{ r.reached }}</td><td>{{ r.completed }}</td><td>{{ r.not_reached }}</td><td>{{ r.failed }}</td></tr> }</tbody>
+        </table>
+        <footer>Echo by Cognilix</footer>
+      </section>
 
       <div class="card" style="margin-top: 12px">
         <div class="filter-bar">
@@ -122,7 +251,41 @@ import { fmtNum, fmtSecs } from '../../utils/format';
 export class OverviewComponent implements OnInit, OnDestroy {
   api = inject(ApiService);
   private router = inject(Router);
+  private auth = inject(AuthService);
   private intervalId: any = null;
+
+  // Compare: the report under the funnel. Share sends exactly this.
+  readonly BYS = [{ key: 'campaign', label: 'Campaign' }, { key: 'agent', label: 'Agent' }, { key: 'day', label: 'Day' }];
+  report = signal<any>(null);
+  by = signal('campaign');
+  // One agent, or all. Nothing about the agent is assumed: its answers and its file columns come from its own setup.
+  agent = signal('');
+  agents = computed<{ key: string; label: string }[]>(() => this.report()?.agents || []);
+  agentName = computed(() => this.agents().find((a) => a.key === this.agent())?.label || this.agent());
+  answers = computed<any[]>(() => this.report()?.answers || []);
+  input = computed<any>(() => (this.report()?.input?.rows ? this.report().input : null));
+  why = computed<any>(() => this.report()?.why || null);
+  rowsLine = computed<any>(() => this.report()?.rows_line || null);
+  bys = computed(() => this.BYS.filter((b) => !(this.agent() && b.key === 'agent')));
+  setAgent(k: string): void { this.agent.set(k || ''); if (k && this.by() === 'agent') this.by.set('campaign'); if (!this.columns().some((c) => c.key === this.by()) && this.isColumn()) this.by.set('campaign'); this.showAll.set(false); this.load(); }
+  pickRow(r: any): void { if (this.by() === 'agent') this.setAgent(r.key); }
+  /** CODE_WORDS and snake_case answers read as plain words; anything already written for people is left alone. */
+  pretty(v: string): string { const s = String(v); if (!/^[A-Za-z0-9]+(_[A-Za-z0-9]+)+$/.test(s) && s !== s.toUpperCase()) return s; const t = s.replace(/_/g, ' ').toLowerCase(); return t[0].toUpperCase() + t.slice(1); }
+  showAll = signal(false);
+  columns = computed<{ key: string; label: string }[]>(() => this.report()?.columns || []);
+  isColumn = computed(() => !this.BYS.some((b) => b.key === this.by()));
+  byLabel = computed(() => this.BYS.find((b) => b.key === this.by())?.label || this.cap(this.columns().find((c) => c.key === this.by())?.label || this.by()));
+  reportRows = computed<any[]>(() => { const rows = this.report()?.rows || []; return this.showAll() ? rows : rows.slice(0, 6); });
+  rt = computed<any>(() => this.report()?.total || {});
+  workspace = computed(() => this.auth.currentMembership()?.org_name || 'Echo');
+  period = computed(() => (this.days() === 1 ? 'Today' : `Last ${this.days()} days`));
+  madeAt = computed(() => new Date(this.report()?.generated_at || Date.now()).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false }));
+  private cap(s: string): string { return s ? s[0].toUpperCase() + s.slice(1) : s; }
+  pc(a: number, b: number): number { return b ? Math.round((a / b) * 100) : 0; }
+  setBy(k: string): void { this.by.set(k); this.showAll.set(false); this.load(); }
+  rowLabel(r: any): string { return this.by() === 'day' ? this.dayLabel(r.label) : r.label; }
+  dayLabel(d: string): string { return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }); }
+  goFollowUps(): void { this.router.navigate(['/follow-ups']); }
   private searchTimer: any = null;
 
   /** Duration bands, in seconds. `max: 0` means "no upper bound". */
@@ -338,11 +501,13 @@ export class OverviewComponent implements OnInit, OnDestroy {
 
   private async load(): Promise<void> {
     try {
-      const [m, c] = await Promise.all([
-        this.api.metrics(this.days()),
-        this.api.calls({ limit: '50', ...this.query() }),
+      const [m, c, r] = await Promise.all([
+        this.api.metrics(this.days(), this.agent()),
+        this.api.calls({ limit: '50', ...this.query(), agent: this.agent() }),
+        this.api.reportSummary({ days: String(this.days()), by: this.by(), agent: this.agent() }).catch(() => null),
       ]);
       this.metrics.set(m);
+      if (r) this.report.set(r);
       this.calls.set(c.calls || []);
       this.total.set(c.total ?? 0);
       this.storage.set(c.storage_connected);

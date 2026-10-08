@@ -18,6 +18,7 @@ const NAV = [
   // unrestricted listing endpoint, untouched by this.
   { to: '/agents', icon: 'bot', label: 'Agents', agentAdminOnly: true },
   { to: '/campaigns', icon: 'megaphone', label: 'Campaigns' },
+  { to: '/follow-ups', icon: 'userCheck', label: 'Follow ups' },
   // org_admin-only server-side (RolesGuard); hidden here for everyone else
   // purely so the link isn't a dead end — see ShellComponent.nav.
   { to: '/team', icon: 'user', label: 'Team', orgAdminOnly: true },
@@ -56,6 +57,7 @@ const NAV = [
                 <span class="sb-ico"><app-icon [name]="n.icon" [size]="18"></app-icon></span>
                 <span class="sb-txt">{{ n.label }}</span>
                 @if (n.to === '/console' && activeCalls() > 0) { <span class="sb-live" title="Live calls"></span> }
+                @if (n.to === '/follow-ups' && followCount() > 0) { <span class="sb-count sb-txt" [title]="followCount() + ' open'">{{ followCount() }}</span><span class="sb-dot" aria-hidden="true"></span> }
               </a>
             }
           }
@@ -107,6 +109,9 @@ export class ShellComponent implements OnInit {
   healthData = this.healthService.health;
   today = this.healthService.todayMetrics;
   activeCalls = computed(() => this.today()?.active_calls || 0);
+  /** Open follow ups, shown on the side bar so nobody has to go and look. */
+  followCount = signal(0);
+  private async loadFollowCount(): Promise<void> { try { this.followCount.set((await this.api.followUps('open')).counts?.open || 0); } catch { /* the page shows the error */ } }
   currentOrgName = computed(() => this.auth.currentMembership()?.org_name || '');
   isOrgAdmin = computed(
     () => this.auth.me()?.platform_admin || this.auth.currentMembership()?.role === 'org_admin',
@@ -176,6 +181,7 @@ export class ShellComponent implements OnInit {
     installDialogKeys('.modal, [role="dialog"]', '.modal-backdrop');
     this.applyTheme();
     this.media.addEventListener('change', this.applyTheme);
+    this.loadFollowCount(); setInterval(() => this.loadFollowCount(), 15000);
     // A page refresh restores accessToken/currentOrgId from localStorage but
     // not `me` (never persisted — it's re-fetched, not stored, so a role
     // change server-side is picked up on the next load rather than cached).

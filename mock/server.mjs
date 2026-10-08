@@ -13,6 +13,7 @@ import { PI_ORG, PI_ROUTE, PI_USERS, piAgent, piCampaign } from './pi-seed.mjs';
 import { simulate, record, reOutcome, planAttempts, rowTiming, RETRY } from './ozonetel.mjs';
 import { INTEGRATION_CATALOG } from './integrations.mjs';
 import { OUTCOMES, DEFAULT_RETRY, retryAgain, contactOutcome, setNoReplyUnder } from './outcome.mjs';
+import { registerReports } from './reports.mjs';
 
 const DATALOAD_PORT = Number(process.env.ECHO_API_PORT || 8090);
 const BACKEND_PORT = Number(process.env.ECHO_WEBRTC_PORT || 8080);
@@ -88,6 +89,21 @@ for (const a of agents) {
 }
 const campaigns = S.campaigns;
 const calls = S.calls;
+// Follow ups demo data: a few not reached contacts end as Blocked, Rejected or with every try used.
+if (MODE === 'target') {
+  const pool = S.campaigns.filter((c) => c.org_id === 'org_moglix').flatMap((c) => c.contacts.filter((r) => ['no_answer', 'busy', 'unreachable'].includes(contactOutcome(r)) && r.status !== 'retry_scheduled').map((r) => [c, r]));
+  const set = (r, outcome, cust) => { const last = (r.attempts_detail || []).slice(-1)[0]; if (!last) return; last.outcome = outcome; Object.assign(last.provider || {}, { Status: 'NotAnswered', CustomerStatus: cust, DialStatus: 'not_answered' }); Object.assign(r, { status: outcome, reason: null, next_attempt_at: null }); };
+  pool.slice(0, 4).forEach(([, r]) => set(r, 'blocked', 'DND'));
+  pool.slice(4, 6).forEach(([, r]) => set(r, 'rejected', 'Rejected'));
+  pool.slice(6).filter(([, r]) => (r.attempts_detail || []).length >= 3).slice(0, 5).forEach(([, r]) => { if (r.status !== 'retry_exhausted') Object.assign(r, { status: 'retry_exhausted', last_attempt_status: 'no_answer', last_attempt_reason: r.reason || 'no_answer', next_attempt_at: null }); });
+  // Input layer demo data: a few rows carry the kind of mistakes real uploads have (a date the other way round, a one off value, a cut short text).
+  S.campaigns.filter((c) => c.org_id === 'org_moglix').slice(0, 4).forEach((c, ci) => c.contacts.forEach((r, i) => { const x = r.context; if (!x) return;
+    if (x.target_dispatch_date && i % 7 === 2) { const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(x.target_dispatch_date); if (m && Number(m[1]) > 12) x.target_dispatch_date = `${m[2]}/${m[1]}/${m[3]}`; }
+    if (x.plant_name && ci === 0 && i % 11 === 4) x.plant_name = r.name || x.plant_name;
+    if (x.item_details && i % 13 === 5) x.item_details = String(x.item_details).slice(0, 4); }));
+  const first = pool[0]?.[1]; if (first) first.follow_up = { state: 'open', reason: 'blocked', owner: 'admin@example.com', notes: [{ text: 'Called from my phone. They will save our number and allow calls from tomorrow.', by: 'admin@example.com', at: new Date(Date.now() - 3 * 3600000).toISOString() }] };
+}
+
 const analyses = {};
 let liveCall = null;
 
@@ -303,6 +319,7 @@ function filterCalls(q) {
   let list = [...calls, ...(liveCall ? [liveCall] : [])].filter(inOrg(q));
   if (q.get('hours')) { const t = Date.now() - Number(q.get('hours')) * 3600000; list = list.filter((c) => Date.parse(c.started_at) >= t); }
   if (q.get('campaign_id')) list = list.filter((c) => c.campaign_id === q.get('campaign_id'));
+  if (q.get('agent')) list = list.filter((c) => c.agent === q.get('agent'));
   if (q.get('min_duration')) list = list.filter((c) => (c.duration_seconds || 0) >= Number(q.get('min_duration')));
   if (q.get('max_duration')) list = list.filter((c) => (c.duration_seconds || 0) <= Number(q.get('max_duration')));
   const term = (q.get('q') || '').trim().toLowerCase();
@@ -319,9 +336,9 @@ const summarise = (outputs, turns, userTurns) => {
   return `Ended without a reported outcome (${turns} turns)`;
 };
 
-function metrics(days, org = 'org_moglix') {
+function metrics(days, org = 'org_moglix', agent = '') {
   const from = Date.now() - days * 86400000;
-  const inWindow = campaigns.filter((c) => (c.org_id || 'org_moglix') === org && Date.parse(c.created_at) >= from);
+  const inWindow = campaigns.filter((c) => (c.org_id || 'org_moglix') === org && Date.parse(c.created_at) >= from && (!agent || c.agent === agent));
   const rows = inWindow.flatMap((c) => c.contacts.map((x) => ({ ...x, agent: c.agent })));
   const gatedRow = (r) => r.status === 'input_validation_failed' || r.reason === 'data_validation_failed' || r.reason === 'duplicate_row' || !agentByKey(r.agent)?.ozonetel_campaign;
   const gated = rows.filter(gatedRow).length;
@@ -337,7 +354,7 @@ function metrics(days, org = 'org_moglix') {
   const talk = attempts.reduce((n, a) => n + (answeredAttempt(a) ? a.talk_seconds || 0 : 0), 0);
   const byStatus = rows.reduce((m, r) => { const k = r.status === 'captured' || r.status === 'disconnected_early' ? 'completed' : r.status; m[k] = (m[k] || 0) + 1; return m; }, {});
   const byResult = completed.reduce((m, r) => { const k = r.call_result || 'conversation'; m[k] = (m[k] || 0) + 1; return m; }, {});
-  const cs = calls.filter((c) => (c.org_id || 'org_moglix') === org && Date.parse(c.started_at) >= from);
+  const cs = calls.filter((c) => (c.org_id || 'org_moglix') === org && Date.parse(c.started_at) >= from && (!agent || c.agent === agent));
   const sum = (f) => cs.reduce((n, c) => n + (Number(f(c)) || 0), 0);
   const rate = (a, b) => (b ? a / b : 0);
   return {
@@ -993,7 +1010,7 @@ on('PUT', '/api/orgs/:org/settings', ({ res, p, body }) => {
 });
 
 // Metrics and calls
-on('GET', '/api/metrics', ({ res, q }) => json(res, 200, metrics(Number(q.get('days') || 30), orgOf(q))));
+on('GET', '/api/metrics', ({ res, q }) => json(res, 200, metrics(Number(q.get('days') || 30), orgOf(q), q.get('agent') || '')));
 on('GET', '/api/calls', ({ res, q }) => {
   const list = filterCalls(q);
   json(res, 200, { calls: list.slice(0, Number(q.get('limit') || 50)).map(callRow), total: list.length, storage_connected: true });
@@ -1357,6 +1374,12 @@ on('GET', '/webrtc/recording/:sid/status', ({ res }) => json(res, 200, { ready: 
 on('GET', '/webrtc/recording/:sid', ({ res, p, q }) => file(res, wav(callById(p.sid)?.duration_seconds), 'audio/wav', `${p.sid}.wav`, q.get('download') !== '1'), { open: true });
 
 // ── Server ───────────────────────────────────────────────────────────────────
+registerReports({ on, json, file, fail, campaigns, agents, agentByKey, users, orgOf, nowIso,
+  isDialled: (c, r) => !(r.status === 'input_validation_failed' || r.reason === 'data_validation_failed' || r.reason === 'duplicate_row' || !agentByKey(c.agent)?.ozonetel_campaign) && !!(r.attempts_detail?.length || ATTEMPTED.has(r.status)),
+  isReached: (r) => (r.attempts_detail || []).some((a) => a.stream?.connected || a.mapped?.result === 'technical_drop') || HAS_CALL.has(r.status),
+  // Call again from Follow ups: the contact goes back to the agent as a fresh dial.
+  redial: (camp, row) => { Object.assign(row, { status: 'pending', reason: null, next_attempt_at: null, last_attempt_status: null, last_attempt_reason: null }); const was = [camp.stopped, camp.paused]; camp.stopped = camp.paused = false; setTimeout(() => { placeCampaignCall(camp, row); [camp.stopped, camp.paused] = was; }, 800); } });
+
 function handler(port) {
   return (req, res) => {
     if (req.method === 'OPTIONS') { res.writeHead(204, CORS); return res.end(); }
