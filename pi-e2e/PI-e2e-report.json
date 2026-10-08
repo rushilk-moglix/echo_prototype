@@ -1,0 +1,76 @@
+{
+ "at": "2026-10-08T10:33:56.430Z",
+ "campaign_id": "hetal-pi-packaging-follow-up-7ba7f132",
+ "checks": [
+  {
+   "name": "Sign in",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "name": "Template has every input column",
+   "pass": true,
+   "detail": "supplier_code, supplier_name, contact_person, phone_number, plant, po_number, item, pending_qty, due_date"
+  },
+  {
+   "name": "Check: 20 rows read",
+   "pass": true,
+   "detail": "rows 20"
+  },
+  {
+   "name": "Check: grouped into 7 calls (8 + 2 split for one supplier)",
+   "pass": true,
+   "detail": "calls 7"
+  },
+  {
+   "name": "Check: no missing columns",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "name": "Campaign created",
+   "pass": true,
+   "detail": "hetal-pi-packaging-follow-up-7ba7f132"
+  },
+  {
+   "name": "Upload stored 7 calls",
+   "pass": true,
+   "detail": "stored 7, dialled 7"
+  },
+  {
+   "name": "Every call finished its first dial (final or retry booked)",
+   "pass": true,
+   "detail": "campaign completed"
+  },
+  {
+   "name": "Every call has a call status",
+   "pass": true,
+   "detail": "completed, completed, completed, completed, no_answer, completed, no_answer"
+  },
+  {
+   "name": "Results: 20 rows, one per uploaded row",
+   "pass": true,
+   "detail": "rows 20"
+  },
+  {
+   "name": "Results: inputs, call status and row answers present",
+   "pass": true,
+   "detail": "supplier_code, supplier_name, contact_person, phone_number, plant, po_number, item, pending_qty, due_date, call_status, dials, talk_seconds, call_result, rows_covered, dispatch_status, lots, ready_qty, ready_date, estimate_date, tentative_window, dispatched_qty, dispatch_date, lr_or_invoice, balance_qty, quality_affected_qty, defect_location, delay_reason, date_change_count, supplier_says, call_id"
+  },
+  {
+   "name": "Results: no duplicate column names",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "name": "Results: file order kept",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "name": "Results: reached rows carry a dispatch status",
+   "pass": true,
+   "detail": "16 reached rows"
+  }
+ ]
+}

@@ -1,0 +1,2377 @@
+{
+ "at": "2026-10-08T10:33:45.706Z",
+ "echo": "http://localhost:18090",
+ "clarix": "http://localhost:18081",
+ "checks": [
+  {
+   "part": "A",
+   "name": "Answered, full conversation: call status",
+   "pass": true,
+   "detail": "completed/conversation"
+  },
+  {
+   "part": "A",
+   "name": "Answered, full conversation: screen word matches status",
+   "pass": true,
+   "detail": "completed"
+  },
+  {
+   "part": "A",
+   "name": "Answered, caller silent (picked up, no speech): call status",
+   "pass": true,
+   "detail": "completed/no_response"
+  },
+  {
+   "part": "A",
+   "name": "Answered, caller silent (picked up, no speech): screen word matches status",
+   "pass": true,
+   "detail": "no_reply"
+  },
+  {
+   "part": "A",
+   "name": "Answered, caller hung up before final confirmation: call status",
+   "pass": true,
+   "detail": "completed/disconnected_early"
+  },
+  {
+   "part": "A",
+   "name": "Answered, caller hung up before final confirmation: screen word matches status",
+   "pass": true,
+   "detail": "caller_hung_up"
+  },
+  {
+   "part": "A",
+   "name": "Answered, voicemail: call status",
+   "pass": true,
+   "detail": "completed/voicemail"
+  },
+  {
+   "part": "A",
+   "name": "Answered, voicemail: screen word matches status",
+   "pass": true,
+   "detail": "voicemail"
+  },
+  {
+   "part": "A",
+   "name": "Answered by Ozonetel, agent never joined: call status",
+   "pass": true,
+   "detail": "completed/technical_drop (bot_not_connected)"
+  },
+  {
+   "part": "A",
+   "name": "Answered by Ozonetel, agent never joined: screen word matches status",
+   "pass": true,
+   "detail": "call_dropped"
+  },
+  {
+   "part": "A",
+   "name": "Answered, short talk (3 s) but a real exchange: call status",
+   "pass": true,
+   "detail": "completed/conversation"
+  },
+  {
+   "part": "A",
+   "name": "Answered, short talk (3 s) but a real exchange: screen word matches status",
+   "pass": true,
+   "detail": "completed"
+  },
+  {
+   "part": "A",
+   "name": "Busy: call status",
+   "pass": true,
+   "detail": "busy (destination_busy)"
+  },
+  {
+   "part": "A",
+   "name": "Busy: screen word matches status",
+   "pass": true,
+   "detail": "busy"
+  },
+  {
+   "part": "A",
+   "name": "NoResponse: call status",
+   "pass": true,
+   "detail": "no_answer (no_response)"
+  },
+  {
+   "part": "A",
+   "name": "NoResponse: screen word matches status",
+   "pass": true,
+   "detail": "no_answer"
+  },
+  {
+   "part": "A",
+   "name": "Rang out (ring): call status",
+   "pass": true,
+   "detail": "no_answer (rang_out)"
+  },
+  {
+   "part": "A",
+   "name": "Rang out (ring): screen word matches status",
+   "pass": true,
+   "detail": "no_answer"
+  },
+  {
+   "part": "A",
+   "name": "DialStatus not_answered only: call status",
+   "pass": true,
+   "detail": "no_answer (not_answered)"
+  },
+  {
+   "part": "A",
+   "name": "DialStatus not_answered only: screen word matches status",
+   "pass": true,
+   "detail": "no_answer"
+  },
+  {
+   "part": "A",
+   "name": "NormalUnspecified: call status",
+   "pass": true,
+   "detail": "no_answer (normal_unspecified)"
+  },
+  {
+   "part": "A",
+   "name": "NormalUnspecified: screen word matches status",
+   "pass": true,
+   "detail": "no_answer"
+  },
+  {
+   "part": "A",
+   "name": "InvalidNumber: call status",
+   "pass": true,
+   "detail": "invalid_number (invalid_number)"
+  },
+  {
+   "part": "A",
+   "name": "InvalidNumber: screen word matches status",
+   "pass": true,
+   "detail": "wrong_number"
+  },
+  {
+   "part": "A",
+   "name": "InvalidNumberFormat: call status",
+   "pass": true,
+   "detail": "invalid_number (invalid_format)"
+  },
+  {
+   "part": "A",
+   "name": "InvalidNumberFormat: screen word matches status",
+   "pass": true,
+   "detail": "wrong_number"
+  },
+  {
+   "part": "A",
+   "name": "SubscriberAbsent (Ozonetel spelling SubcriberAbsent): call status",
+   "pass": true,
+   "detail": "unreachable (subscriber_absent)"
+  },
+  {
+   "part": "A",
+   "name": "SubscriberAbsent (Ozonetel spelling SubcriberAbsent): screen word matches status",
+   "pass": true,
+   "detail": "unreachable"
+  },
+  {
+   "part": "A",
+   "name": "NoRouteDestination: call status",
+   "pass": true,
+   "detail": "unreachable (no_route)"
+  },
+  {
+   "part": "A",
+   "name": "NoRouteDestination: screen word matches status",
+   "pass": true,
+   "detail": "unreachable"
+  },
+  {
+   "part": "A",
+   "name": "Congestion (provider error): call status",
+   "pass": true,
+   "detail": "failed (congestion)"
+  },
+  {
+   "part": "A",
+   "name": "Congestion (provider error): screen word matches status",
+   "pass": true,
+   "detail": "network_error"
+  },
+  {
+   "part": "A",
+   "name": "Exception (provider error): call status",
+   "pass": true,
+   "detail": "failed (provider_exception)"
+  },
+  {
+   "part": "A",
+   "name": "Exception (provider error): screen word matches status",
+   "pass": true,
+   "detail": "network_error"
+  },
+  {
+   "part": "A",
+   "name": "ISDDisabled (PRD-ECHO-11 rule 9: Failed): call status",
+   "pass": true,
+   "detail": "failed (isd_disabled)"
+  },
+  {
+   "part": "A",
+   "name": "ISDDisabled (PRD-ECHO-11 rule 9: Failed): screen word matches status",
+   "pass": true,
+   "detail": "network_error"
+  },
+  {
+   "part": "A",
+   "name": "Explicit block (DND): call status",
+   "pass": true,
+   "detail": "blocked (dnd)"
+  },
+  {
+   "part": "A",
+   "name": "Explicit block (DND): screen word matches status",
+   "pass": true,
+   "detail": "blocked"
+  },
+  {
+   "part": "A",
+   "name": "Unknown provider value: call status",
+   "pass": true,
+   "detail": "failed (unknown_provider_status)"
+  },
+  {
+   "part": "A",
+   "name": "Unknown provider value: screen word matches status",
+   "pass": true,
+   "detail": "network_error"
+  },
+  {
+   "part": "A",
+   "name": "Conflict: NotAnswered with TalkTime > 0: call status",
+   "pass": true,
+   "detail": "no_answer (no_response)"
+  },
+  {
+   "part": "A",
+   "name": "Conflict: NotAnswered with TalkTime > 0: screen word matches status",
+   "pass": true,
+   "detail": "no_answer"
+  },
+  {
+   "part": "A",
+   "name": "Conflict: Ozonetel NotAnswered but Echo heard the caller: call status",
+   "pass": true,
+   "detail": "completed/conversation"
+  },
+  {
+   "part": "A",
+   "name": "Conflict: Ozonetel NotAnswered but Echo heard the caller: screen word matches status",
+   "pass": true,
+   "detail": "completed"
+  },
+  {
+   "part": "A",
+   "name": "Explicit rejection maps to Rejected (Ozonetel sends none today; other providers may)",
+   "pass": true,
+   "detail": "rejected (declined)"
+  },
+  {
+   "part": "A",
+   "name": "Unknown CustomerStatus with DialStatus not_answered is logged, not No Answer",
+   "pass": true,
+   "detail": "failed; UNKNOWN_PROVIDER_VALUE Status=NotAnswered DialStatus=not_answered CustomerStatus=FooBar"
+  },
+  {
+   "part": "B",
+   "name": "Echo sign in",
+   "pass": true,
+   "detail": ""
+  },
+  {
+   "part": "B",
+   "name": "Clarix template mapped to an Echo agent",
+   "pass": true,
+   "detail": "Priya - RFX Quote Agent"
+  },
+  {
+   "part": "B",
+   "name": "Scripted Ozonetel results queued (fast timers)",
+   "pass": true,
+   "detail": "{\"queued\":45,\"retry_ms\":1500}"
+  },
+  {
+   "part": "B",
+   "name": "S1 Successful call: Echo campaign status",
+   "pass": true,
+   "detail": "running -> completed (expected completed)"
+  },
+  {
+   "part": "B",
+   "name": "S1 Successful call: row 1 call status",
+   "pass": true,
+   "detail": "queued -> in_progress -> completed (expected completed; screen: completed)"
+  },
+  {
+   "part": "B",
+   "name": "S1 Successful call: every Clarix row equals Echo (call status and outcome)",
+   "pass": true,
+   "detail": "0 of 1 differ"
+  },
+  {
+   "part": "B",
+   "name": "S1 Successful call: Clarix campaign status equals Echo's",
+   "pass": true,
+   "detail": "Echo completed; Clarix COMPLETED"
+  },
+  {
+   "part": "B",
+   "name": "S1 Successful call: no Clarix row left in progress after Echo finished",
+   "pass": true,
+   "detail": "Clarix in progress 0"
+  },
+  {
+   "part": "B",
+   "name": "S2 No Answer + retry: Echo campaign status",
+   "pass": true,
+   "detail": "running -> completed (expected completed)"
+  },
+  {
+   "part": "B",
+   "name": "S2 No Answer + retry: row 1 call status",
+   "pass": true,
+   "detail": "queued -> calling -> retry_scheduled -> calling -> retry_scheduled -> calling -> retry_exhausted (expected retry_exhausted; screen: no_answer)"
+  },
+  {
+   "part": "B",
+   "name": "S2 No Answer + retry: Retry Scheduled seen between attempts",
+   "pass": true,
+   "detail": "queued -> calling -> retry_scheduled -> calling -> retry_scheduled -> calling -> retry_exhausted"
+  },
+  {
+   "part": "B",
+   "name": "S2 No Answer + retry: row 1 attempts",
+   "pass": true,
+   "detail": "3"
+  },
+  {
+   "part": "B",
+   "name": "S2 No Answer + retry: every Clarix row equals Echo (call status and outcome)",
+   "pass": true,
+   "detail": "0 of 1 differ"
+  },
+  {
+   "part": "B",
+   "name": "S2 No Answer + retry: Clarix campaign status equals Echo's",
+   "pass": true,
+   "detail": "Echo completed; Clarix COMPLETED"
+  },
+  {
+   "part": "B",
+   "name": "S2 No Answer + retry: no Clarix row left in progress after Echo finished",
+   "pass": true,
+   "detail": "Clarix in progress 0"
+  },
+  {
+   "part": "B",
+   "name": "S3 Busy + retry, then answered: Echo campaign status",
+   "pass": true,
+   "detail": "running -> completed (expected completed)"
+  },
+  {
+   "part": "B",
+   "name": "S3 Busy + retry, then answered: row 1 call status",
+   "pass": true,
+   "detail": "queued -> calling -> retry_scheduled -> in_progress -> completed (expected completed; screen: completed)"
+  },
+  {
+   "part": "B",
+   "name": "S3 Busy + retry, then answered: Retry Scheduled seen between attempts",
+   "pass": true,
+   "detail": "queued -> calling -> retry_scheduled -> in_progress -> completed"
+  },
+  {
+   "part": "B",
+   "name": "S3 Busy + retry, then answered: row 1 attempts",
+   "pass": true,
+   "detail": "3"
+  },
+  {
+   "part": "B",
+   "name": "S3 Busy + retry, then answered: every Clarix row equals Echo (call status and outcome)",
+   "pass": true,
+   "detail": "0 of 1 differ"
+  },
+  {
+   "part": "B",
+   "name": "S3 Busy + retry, then answered: Clarix campaign status equals Echo's",
+   "pass": true,
+   "detail": "Echo completed; Clarix COMPLETED"
+  },
+  {
+   "part": "B",
+   "name": "S3 Busy + retry, then answered: no Clarix row left in progress after Echo finished",
+   "pass": true,
+   "detail": "Clarix in progress 0"
+  },
+  {
+   "part": "B",
+   "name": "S4 Invalid Number, no retry: Echo campaign status",
+   "pass": true,
+   "detail": "running -> completed (expected completed)"
+  },
+  {
+   "part": "B",
+   "name": "S4 Invalid Number, no retry: row 1 call status",
+   "pass": true,
+   "detail": "queued -> invalid_number (expected invalid_number; screen: wrong_number)"
+  },
+  {
+   "part": "B",
+   "name": "S4 Invalid Number, no retry: row 1 attempts",
+   "pass": true,
+   "detail": "1"
+  },
+  {
+   "part": "B",
+   "name": "S4 Invalid Number, no retry: every Clarix row equals Echo (call status and outcome)",
+   "pass": true,
+   "detail": "0 of 1 differ"
+  },
+  {
+   "part": "B",
+   "name": "S4 Invalid Number, no retry: Clarix campaign status equals Echo's",
+   "pass": true,
+   "detail": "Echo completed; Clarix COMPLETED"
+  },
+  {
+   "part": "B",
+   "name": "S4 Invalid Number, no retry: no Clarix row left in progress after Echo finished",
+   "pass": true,
+   "detail": "Clarix in progress 0"
+  },
+  {
+   "part": "B",
+   "name": "S5 Unreachable: Echo campaign status",
+   "pass": true,
+   "detail": "running -> completed (expected completed)"
+  },
+  {
+   "part": "B",
+   "name": "S5 Unreachable: row 1 call status",
+   "pass": true,
+   "detail": "queued -> retry_scheduled -> retry_exhausted (expected retry_exhausted; screen: unreachable)"
+  },
+  {
+   "part": "B",
+   "name": "S5 Unreachable: row 1 attempts",
+   "pass": true,
+   "detail": "3"
+  },
+  {
+   "part": "B",
+   "name": "S5 Unreachable: every Clarix row equals Echo (call status and outcome)",
+   "pass": true,
+   "detail": "0 of 1 differ"
+  },
+  {
+   "part": "B",
+   "name": "S5 Unreachable: Clarix campaign status equals Echo's",
+   "pass": true,
+   "detail": "Echo completed; Clarix COMPLETED"
+  },
+  {
+   "part": "B",
+   "name": "S5 Unreachable: no Clarix row left in progress after Echo finished",
+   "pass": true,
+   "detail": "Clarix in progress 0"
+  },
+  {
+   "part": "B",
+   "name": "S6 Technical failure (provider exception): Echo campaign status",
+   "pass": true,
+   "detail": "running -> completed (expected completed)"
+  },
+  {
+   "part": "B",
+   "name": "S6 Technical failure (provider exception): row 1 call status",
+   "pass": true,
+   "detail": "queued -> calling -> retry_scheduled -> calling -> retry_exhausted (expected retry_exhausted; screen: network_error)"
+  },
+  {
+   "part": "B",
+   "name": "S6 Technical failure (provider exception): row 1 attempts",
+   "pass": true,
+   "detail": "3"
+  },
+  {
+   "part": "B",
+   "name": "S6 Technical failure (provider exception): every Clarix row equals Echo (call status and outcome)",
+   "pass": true,
+   "detail": "0 of 1 differ"
+  },
+  {
+   "part": "B",
+   "name": "S6 Technical failure (provider exception): Clarix campaign status equals Echo's",
+   "pass": true,
+   "detail": "Echo completed; Clarix COMPLETED"
+  },
+  {
+   "part": "B",
+   "name": "S6 Technical failure (provider exception): no Clarix row left in progress after Echo finished",
+   "pass": true,
+   "detail": "Clarix in progress 0"
+  },
+  {
+   "part": "B",
+   "name": "S7 Mixed results -> Completed: Echo campaign status",
+   "pass": true,
+   "detail": "running -> completed (expected completed)"
+  },
+  {
+   "part": "B",
+   "name": "S7 Mixed results -> Completed: row 1 call status",
+   "pass": true,
+   "detail": "queued -> in_progress -> completed (expected completed; screen: completed)"
+  },
+  {
+   "part": "B",
+   "name": "S7 Mixed results -> Completed: row 2 call status",
+   "pass": true,
+   "detail": "queued -> in_progress -> retry_scheduled -> in_progress -> retry_scheduled -> in_progress -> completed (expected completed; screen: caller_hung_up)"
+  },
+  {
+   "part": "B",
+   "name": "S7 Mixed results -> Completed: row 3 call status",
+   "pass": true,
+   "detail": "queued -> invalid_number (expected invalid_number; screen: wrong_number)"
+  },
+  {
+   "part": "B",
+   "name": "S7 Mixed results -> Completed: row 4 call status",
+   "pass": true,
+   "detail": "queued -> in_progress -> retry_scheduled -> in_progress -> completed (expected completed; screen: completed)"
+  },
+  {
+   "part": "B",
+   "name": "S7 Mixed results -> Completed: row 5 call status",
+   "pass": true,
+   "detail": "queued -> retry_scheduled -> in_progress -> retry_scheduled -> in_progress -> completed (expected completed; screen: completed)"
+  },
+  {
+   "part": "B",
+   "name": "S7 Mixed results -> Completed: every Clarix row equals Echo (call status and outcome)",
+   "pass": true,
+   "detail": "0 of 5 differ"
+  },
+  {
+   "part": "B",
+   "name": "S7 Mixed results -> Completed: Clarix campaign status equals Echo's",
+   "pass": true,
+   "detail": "Echo completed; Clarix COMPLETED"
+  },
+  {
+   "part": "B",
+   "name": "S7 Mixed results -> Completed: no Clarix row left in progress after Echo finished",
+   "pass": true,
+   "detail": "Clarix in progress 0"
+  },
+  {
+   "part": "B",
+   "name": "S8 Unprocessed calls -> Partially Completed (stopped in Echo): Echo campaign status",
+   "pass": true,
+   "detail": "running -> partially_completed (expected partially_completed)"
+  },
+  {
+   "part": "B",
+   "name": "S8 Unprocessed calls -> Partially Completed (stopped in Echo): every Clarix row equals Echo (call status and outcome)",
+   "pass": true,
+   "detail": "0 of 14 differ"
+  },
+  {
+   "part": "B",
+   "name": "S8 Unprocessed calls -> Partially Completed (stopped in Echo): Clarix campaign status equals Echo's",
+   "pass": true,
+   "detail": "Echo partially_completed; Clarix PARTIALLY_COMPLETED"
+  },
+  {
+   "part": "B",
+   "name": "S8 Unprocessed calls -> Partially Completed (stopped in Echo): no Clarix row left in progress after Echo finished",
+   "pass": true,
+   "detail": "Clarix in progress 0"
+  },
+  {
+   "part": "B",
+   "name": "S9 Campaign cancellation (stopped before any dial): Echo campaign status",
+   "pass": true,
+   "detail": "cancelled (expected cancelled)"
+  },
+  {
+   "part": "B",
+   "name": "S9 Campaign cancellation (stopped before any dial): row 1 call status",
+   "pass": true,
+   "detail": "cancelled (expected cancelled; screen: stopped)"
+  },
+  {
+   "part": "B",
+   "name": "S9 Campaign cancellation (stopped before any dial): row 2 call status",
+   "pass": true,
+   "detail": "cancelled (expected cancelled; screen: stopped)"
+  },
+  {
+   "part": "B",
+   "name": "S9 Campaign cancellation (stopped before any dial): row 3 call status",
+   "pass": true,
+   "detail": "cancelled (expected cancelled; screen: stopped)"
+  },
+  {
+   "part": "B",
+   "name": "S9 Campaign cancellation (stopped before any dial): every Clarix row equals Echo (call status and outcome)",
+   "pass": true,
+   "detail": "0 of 3 differ"
+  },
+  {
+   "part": "B",
+   "name": "S9 Campaign cancellation (stopped before any dial): Clarix campaign status equals Echo's",
+   "pass": true,
+   "detail": "Echo cancelled; Clarix CANCELLED"
+  },
+  {
+   "part": "B",
+   "name": "S9 Campaign cancellation (stopped before any dial): no Clarix row left in progress after Echo finished",
+   "pass": true,
+   "detail": "Clarix in progress 0"
+  },
+  {
+   "part": "B",
+   "name": "S10 Stop from Clarix reaches Echo (ECHO-162): Echo campaign status",
+   "pass": true,
+   "detail": "running -> partially_completed (expected partially_completed)"
+  },
+  {
+   "part": "B",
+   "name": "S10 Stop from Clarix reaches Echo (ECHO-162): every Clarix row equals Echo (call status and outcome)",
+   "pass": true,
+   "detail": "0 of 10 differ"
+  },
+  {
+   "part": "B",
+   "name": "S10 Stop from Clarix reaches Echo (ECHO-162): Clarix campaign status equals Echo's",
+   "pass": true,
+   "detail": "Echo partially_completed; Clarix PARTIALLY_COMPLETED"
+  },
+  {
+   "part": "B",
+   "name": "S10 Stop from Clarix reaches Echo (ECHO-162): no Clarix row left in progress after Echo finished",
+   "pass": true,
+   "detail": "Clarix in progress 0"
+  },
+  {
+   "part": "B",
+   "name": "S12 Pause and resume: Echo campaign status",
+   "pass": true,
+   "detail": "running -> completed (expected completed)"
+  },
+  {
+   "part": "B",
+   "name": "S12 Pause and resume: Running -> Paused (no new dials while paused) -> Running -> Completed",
+   "pass": true,
+   "detail": "{\"pauseHttp\":200,\"statusWhilePaused\":\"paused\",\"dialsA\":2,\"dialsB\":2,\"clarixMid\":\"PAUSED\"}"
+  },
+  {
+   "part": "B",
+   "name": "S12 Pause and resume: Clarix shows Paused while Echo is paused",
+   "pass": true,
+   "detail": "PAUSED"
+  },
+  {
+   "part": "B",
+   "name": "S12 Pause and resume: every Clarix row equals Echo (call status and outcome)",
+   "pass": true,
+   "detail": "0 of 6 differ"
+  },
+  {
+   "part": "B",
+   "name": "S12 Pause and resume: Clarix campaign status equals Echo's",
+   "pass": true,
+   "detail": "Echo completed; Clarix COMPLETED"
+  },
+  {
+   "part": "B",
+   "name": "S12 Pause and resume: no Clarix row left in progress after Echo finished",
+   "pass": true,
+   "detail": "Clarix in progress 0"
+  },
+  {
+   "part": "B",
+   "name": "S11 Repeated phone number in one sheet: row 1 call status",
+   "pass": true,
+   "detail": "queued -> in_progress -> completed (expected completed; screen: completed)"
+  },
+  {
+   "part": "B",
+   "name": "S11 Repeated phone number in one sheet: row 2 call status",
+   "pass": true,
+   "detail": "input_validation_failed (expected input_validation_failed; screen: repeated_number)"
+  },
+  {
+   "part": "B",
+   "name": "S11 Repeated phone number in one sheet: row 1 shown as",
+   "pass": true,
+   "detail": "completed"
+  },
+  {
+   "part": "B",
+   "name": "S11 Repeated phone number in one sheet: row 2 shown as",
+   "pass": true,
+   "detail": "repeated_number"
+  },
+  {
+   "part": "B",
+   "name": "S11 Repeated phone number in one sheet: every Clarix row equals Echo (call status and outcome)",
+   "pass": true,
+   "detail": "0 of 2 differ"
+  },
+  {
+   "part": "B",
+   "name": "S11 Repeated phone number in one sheet: Clarix campaign status equals Echo's",
+   "pass": true,
+   "detail": "Echo completed; Clarix COMPLETED"
+  },
+  {
+   "part": "B",
+   "name": "S11 Repeated phone number in one sheet: no Clarix row left in progress after Echo finished",
+   "pass": true,
+   "detail": "Clarix in progress 0"
+  },
+  {
+   "part": "C",
+   "name": "Copy an agent in Echo",
+   "pass": true,
+   "detail": "e2e_sync_agent_21612"
+  },
+  {
+   "part": "C",
+   "name": "Copied agent is not marked Synced before any push",
+   "pass": true,
+   "detail": "null"
+  },
+  {
+   "part": "C",
+   "name": "Sync creates the Clarix agent setup",
+   "pass": true,
+   "detail": "synced; Clarix setup 6aa85786ad0e3b0d44813170"
+  },
+  {
+   "part": "C",
+   "name": "Clarix shows the correct agent name",
+   "pass": true,
+   "detail": "E2E Sync Agent 21612"
+  },
+  {
+   "part": "C",
+   "name": "Rename in Echo reaches Clarix (no stale name)",
+   "pass": true,
+   "detail": "E2E Sync Agent 21612 renamed"
+  },
+  {
+   "part": "C",
+   "name": "Sync state is fresh after the change (not stale Synced)",
+   "pass": true,
+   "detail": "synced synced_at 2026-10-08T10:33:42.174Z updated_at 2026-10-08T10:33:42.159Z"
+  },
+  {
+   "part": "C",
+   "name": "Clarix Provider Agent ID list includes the new Echo agent",
+   "pass": true,
+   "detail": "11 agents listed"
+  },
+  {
+   "part": "C",
+   "name": "Delete in Echo reaches Clarix (setup archived or flagged)",
+   "pass": true,
+   "detail": "Clarix setup still ARCHIVED"
+  },
+  {
+   "part": "C",
+   "name": "Two campaigns created together get different names",
+   "pass": true,
+   "detail": "Priya - RFX Quote Agent - 2026-10-08 10:33 | Priya - RFX Quote Agent - 2026-10-08 10:33 (2)"
+  },
+  {
+   "part": "C",
+   "name": "A new empty campaign is Ready",
+   "pass": true,
+   "detail": "ready"
+  },
+  {
+   "part": "C",
+   "name": "Clarix rejects a bad phone and a missing required field before dialling",
+   "pass": true,
+   "detail": "[{\"row\":2,\"reason\":\"Invalid phone number\"},{\"row\":3,\"reason\":\"Missing required field(s): rfx_number\"}]"
+  },
+  {
+   "part": "C",
+   "name": "A sheet with no valid rows does not leave an empty campaign behind",
+   "pass": true,
+   "detail": "none"
+  },
+  {
+   "part": "C",
+   "name": "Clarix campaigns pagination: pages differ and total is reported",
+   "pass": true,
+   "detail": "page0 3, page1 3, total 22"
+  },
+  {
+   "part": "C",
+   "name": "Clarix Calls placed counts only rows Echo dialled",
+   "pass": true,
+   "detail": "this run: Clarix placed 24, Echo dialled 24, rows 46; org summary callsPlaced 117"
+  },
+  {
+   "part": "C",
+   "name": "Failed call count matches (Echo failed group vs Clarix)",
+   "pass": true,
+   "detail": "Echo 1, Clarix 1; Clarix workflow FAILED 6 (includes no answer, busy, invalid)"
+  },
+  {
+   "part": "C",
+   "name": "Export of a finished campaign downloads",
+   "pass": true,
+   "detail": "200 application/zip"
+  },
+  {
+   "part": "C",
+   "name": "Run again on a completed campaign does not dial anyone",
+   "pass": true,
+   "detail": "dialled 0"
+  },
+  {
+   "part": "C",
+   "name": "Running -> Failed is campaign level (calling flow off) and Clarix shows Failed",
+   "pass": true,
+   "detail": "Echo failed; Clarix FAILED"
+  },
+  {
+   "part": "C",
+   "name": "Re-analyze a finished call works (no Not Found)",
+   "pass": true,
+   "detail": "HTTP 200"
+  }
+ ],
+ "matrix": [
+  {
+   "case": "Answered, full conversation",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration": "00:02:34",
+   "talk_time": "00:02:27",
+   "expected": "completed / conversation",
+   "echo_call_status": "completed",
+   "echo_reason_result": "conversation",
+   "anomalies": "",
+   "screen_word": "completed",
+   "retry_status_layer": false,
+   "retry_screen_layer": false,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "Answered, caller silent (picked up, no speech)",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration": "00:00:17",
+   "talk_time": "00:00:03",
+   "expected": "completed / no_response",
+   "echo_call_status": "completed",
+   "echo_reason_result": "no_response",
+   "anomalies": "",
+   "screen_word": "no_reply",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "Answered, caller hung up before final confirmation",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration": "00:00:22",
+   "talk_time": "00:00:09",
+   "expected": "completed / disconnected_early",
+   "echo_call_status": "completed",
+   "echo_reason_result": "disconnected_early",
+   "anomalies": "",
+   "screen_word": "caller_hung_up",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "Answered, voicemail",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration": "00:00:38",
+   "talk_time": "00:00:20",
+   "expected": "completed / voicemail",
+   "echo_call_status": "completed",
+   "echo_reason_result": "voicemail",
+   "anomalies": "",
+   "screen_word": "voicemail",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "Answered by Ozonetel, agent never joined",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration": "00:00:10",
+   "talk_time": "00:00:04",
+   "expected": "completed / technical_drop",
+   "echo_call_status": "completed",
+   "echo_reason_result": "technical_drop",
+   "anomalies": "BOT_NOT_CONNECTED",
+   "screen_word": "call_dropped",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "Answered, short talk (3 s) but a real exchange",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration": "00:02:34",
+   "talk_time": "00:00:03",
+   "expected": "completed / conversation",
+   "echo_call_status": "completed",
+   "echo_reason_result": "conversation",
+   "anomalies": "",
+   "screen_word": "completed",
+   "retry_status_layer": false,
+   "retry_screen_layer": false,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "Busy",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "Busy",
+   "duration": "00:00:04",
+   "talk_time": "00:00:00",
+   "expected": "busy",
+   "echo_call_status": "busy",
+   "echo_reason_result": "destination_busy",
+   "anomalies": "",
+   "screen_word": "busy",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "NoResponse",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "NoResponse",
+   "duration": "00:00:39",
+   "talk_time": "00:00:00",
+   "expected": "no_answer",
+   "echo_call_status": "no_answer",
+   "echo_reason_result": "no_response",
+   "anomalies": "",
+   "screen_word": "no_answer",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "Rang out (ring)",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "ring",
+   "duration": "00:00:36",
+   "talk_time": "00:00:00",
+   "expected": "no_answer",
+   "echo_call_status": "no_answer",
+   "echo_reason_result": "rang_out",
+   "anomalies": "",
+   "screen_word": "no_answer",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "DialStatus not_answered only",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "",
+   "duration": "00:00:41",
+   "talk_time": "00:00:00",
+   "expected": "no_answer",
+   "echo_call_status": "no_answer",
+   "echo_reason_result": "not_answered",
+   "anomalies": "",
+   "screen_word": "no_answer",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "NormalUnspecified",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "NormalUnspecified",
+   "customer_status": "NormalUnspecified",
+   "duration": "00:00:00",
+   "talk_time": "00:00:00",
+   "expected": "no_answer",
+   "echo_call_status": "no_answer",
+   "echo_reason_result": "normal_unspecified",
+   "anomalies": "",
+   "screen_word": "no_answer",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "InvalidNumber",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "invalid_number",
+   "customer_status": "InvalidNumber",
+   "duration": "00:00:02",
+   "talk_time": "00:00:00",
+   "expected": "invalid_number",
+   "echo_call_status": "invalid_number",
+   "echo_reason_result": "invalid_number",
+   "anomalies": "",
+   "screen_word": "wrong_number",
+   "retry_status_layer": false,
+   "retry_screen_layer": false,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "InvalidNumberFormat",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "invalid_number",
+   "customer_status": "InvalidNumberFormat",
+   "duration": "00:00:02",
+   "talk_time": "00:00:00",
+   "expected": "invalid_number",
+   "echo_call_status": "invalid_number",
+   "echo_reason_result": "invalid_format",
+   "anomalies": "",
+   "screen_word": "wrong_number",
+   "retry_status_layer": false,
+   "retry_screen_layer": false,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "SubscriberAbsent (Ozonetel spelling SubcriberAbsent)",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "SubcriberAbsent",
+   "duration": "00:00:03",
+   "talk_time": "00:00:00",
+   "expected": "unreachable",
+   "echo_call_status": "unreachable",
+   "echo_reason_result": "subscriber_absent",
+   "anomalies": "",
+   "screen_word": "unreachable",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "NoRouteDestination",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "NoRouteDestination",
+   "duration": "00:00:03",
+   "talk_time": "00:00:00",
+   "expected": "unreachable",
+   "echo_call_status": "unreachable",
+   "echo_reason_result": "no_route",
+   "anomalies": "",
+   "screen_word": "unreachable",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "Congestion (provider error)",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "exception",
+   "customer_status": "Congestion",
+   "duration": "00:00:03",
+   "talk_time": "00:00:00",
+   "expected": "failed",
+   "echo_call_status": "failed",
+   "echo_reason_result": "congestion",
+   "anomalies": "",
+   "screen_word": "network_error",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "Exception (provider error)",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "exception",
+   "customer_status": "exception",
+   "duration": "00:00:01",
+   "talk_time": "00:00:00",
+   "expected": "failed",
+   "echo_call_status": "failed",
+   "echo_reason_result": "provider_exception",
+   "anomalies": "",
+   "screen_word": "network_error",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "ISDDisabled (PRD-ECHO-11 rule 9: Failed)",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "ISDDisabled",
+   "duration": "00:00:03",
+   "talk_time": "00:00:00",
+   "expected": "failed",
+   "echo_call_status": "failed",
+   "echo_reason_result": "isd_disabled",
+   "anomalies": "",
+   "screen_word": "network_error",
+   "retry_status_layer": false,
+   "retry_screen_layer": false,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "Explicit block (DND)",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "DND",
+   "duration": "00:00:41",
+   "talk_time": "00:00:00",
+   "expected": "blocked",
+   "echo_call_status": "blocked",
+   "echo_reason_result": "dnd",
+   "anomalies": "",
+   "screen_word": "blocked",
+   "retry_status_layer": false,
+   "retry_screen_layer": false,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "Unknown provider value",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "mystery",
+   "customer_status": "FooBar",
+   "duration": "00:00:41",
+   "talk_time": "00:00:00",
+   "expected": "failed",
+   "echo_call_status": "failed",
+   "echo_reason_result": "unknown_provider_status",
+   "anomalies": "UNKNOWN_PROVIDER_VALUE Status=NotAnswered DialStatus=mystery CustomerStatus=FooBar",
+   "screen_word": "network_error",
+   "retry_status_layer": false,
+   "retry_screen_layer": false,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "Conflict: NotAnswered with TalkTime > 0",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "NoResponse",
+   "duration": "00:00:40",
+   "talk_time": "00:00:07",
+   "expected": "no_answer",
+   "echo_call_status": "no_answer",
+   "echo_reason_result": "no_response",
+   "anomalies": "PROVIDER_DATA_CONFLICT",
+   "screen_word": "no_answer",
+   "retry_status_layer": true,
+   "retry_screen_layer": true,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "Conflict: Ozonetel NotAnswered but Echo heard the caller",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "NoResponse",
+   "duration": "00:02:34",
+   "talk_time": "00:02:27",
+   "expected": "completed / conversation",
+   "echo_call_status": "completed",
+   "echo_reason_result": "conversation",
+   "anomalies": "PROVIDER_SAYS_NOT_ANSWERED",
+   "screen_word": "completed",
+   "retry_status_layer": false,
+   "retry_screen_layer": false,
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "CustomerStatus FooBar with DialStatus not_answered",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "FooBar",
+   "duration": "",
+   "talk_time": "",
+   "expected": "failed (logged)",
+   "echo_call_status": "failed",
+   "echo_reason_result": "unknown_provider_status",
+   "anomalies": "UNKNOWN_PROVIDER_VALUE Status=NotAnswered DialStatus=not_answered CustomerStatus=FooBar",
+   "screen_word": "network_error",
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  },
+  {
+   "case": "CustomerStatus Rejected with DialStatus not_answered",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "Rejected",
+   "duration": "",
+   "talk_time": "",
+   "expected": "rejected",
+   "echo_call_status": "rejected",
+   "echo_reason_result": "declined",
+   "anomalies": "",
+   "screen_word": "rejected",
+   "status_ok": true,
+   "screen_ok": true,
+   "retry_consistent": true
+  }
+ ],
+ "evidence": [
+  {
+   "scenario": "S1",
+   "row": 1,
+   "phone": "7000001000",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 154,
+   "talk_time_s": 148,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "queued > in_progress > completed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S2",
+   "row": 1,
+   "phone": "7000001001",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "ring",
+   "duration_s": 32,
+   "talk_time_s": 0,
+   "echo_call_status": "retry_exhausted",
+   "echo_reason_outcome": "rang_out / no_answer",
+   "retry": "3 dial(s), retried",
+   "transitions": "queued > calling > retry_scheduled > calling > retry_scheduled > calling > retry_exhausted",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "RETRY_EXHAUSTED",
+   "clarix_workflow_status": "FAILED",
+   "clarix_outcome": "no_answer",
+   "match": "yes"
+  },
+  {
+   "scenario": "S3",
+   "row": 1,
+   "phone": "7000001002",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 126,
+   "talk_time_s": 110,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "3 dial(s), retried",
+   "transitions": "queued > calling > retry_scheduled > in_progress > completed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S4",
+   "row": 1,
+   "phone": "7000001003",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "invalid_number",
+   "customer_status": "InvalidNumber",
+   "duration_s": 1,
+   "talk_time_s": 0,
+   "echo_call_status": "invalid_number",
+   "echo_reason_outcome": "invalid_number / wrong_number",
+   "retry": "1 dial(s)",
+   "transitions": "queued > invalid_number",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "INVALID_NUMBER",
+   "clarix_workflow_status": "FAILED",
+   "clarix_outcome": "wrong_number",
+   "match": "yes"
+  },
+  {
+   "scenario": "S5",
+   "row": 1,
+   "phone": "7000001004",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "not_answered",
+   "customer_status": "SubcriberAbsent",
+   "duration_s": 1,
+   "talk_time_s": 0,
+   "echo_call_status": "retry_exhausted",
+   "echo_reason_outcome": "subscriber_absent / unreachable",
+   "retry": "3 dial(s), retried",
+   "transitions": "queued > retry_scheduled > retry_exhausted",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "RETRY_EXHAUSTED",
+   "clarix_workflow_status": "FAILED",
+   "clarix_outcome": "unreachable",
+   "match": "yes"
+  },
+  {
+   "scenario": "S6",
+   "row": 1,
+   "phone": "7000001005",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "exception",
+   "customer_status": "exception",
+   "duration_s": 3,
+   "talk_time_s": 0,
+   "echo_call_status": "retry_exhausted",
+   "echo_reason_outcome": "provider_exception / network_error",
+   "retry": "3 dial(s), retried",
+   "transitions": "queued > calling > retry_scheduled > calling > retry_exhausted",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "RETRY_EXHAUSTED",
+   "clarix_workflow_status": "FAILED",
+   "clarix_outcome": "network_error",
+   "match": "yes"
+  },
+  {
+   "scenario": "S7",
+   "row": 1,
+   "phone": "7000001006",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 193,
+   "talk_time_s": 183,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "queued > in_progress > completed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S7",
+   "row": 2,
+   "phone": "7000001007",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 22,
+   "talk_time_s": 10,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "disconnected_early / caller_hung_up",
+   "retry": "3 dial(s), retried",
+   "transitions": "queued > in_progress > retry_scheduled > in_progress > retry_scheduled > in_progress > completed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "caller_hung_up",
+   "match": "yes"
+  },
+  {
+   "scenario": "S7",
+   "row": 3,
+   "phone": "7000001008",
+   "ozonetel_status": "NotAnswered",
+   "dial_status": "invalid_number",
+   "customer_status": "InvalidNumberFormat",
+   "duration_s": 2,
+   "talk_time_s": 0,
+   "echo_call_status": "invalid_number",
+   "echo_reason_outcome": "invalid_format / wrong_number",
+   "retry": "1 dial(s)",
+   "transitions": "queued > invalid_number",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "INVALID_NUMBER",
+   "clarix_workflow_status": "FAILED",
+   "clarix_outcome": "wrong_number",
+   "match": "yes"
+  },
+  {
+   "scenario": "S7",
+   "row": 4,
+   "phone": "7000001009",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 182,
+   "talk_time_s": 169,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "2 dial(s), retried",
+   "transitions": "queued > in_progress > retry_scheduled > in_progress > completed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S7",
+   "row": 5,
+   "phone": "7000001010",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 111,
+   "talk_time_s": 93,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "3 dial(s), retried",
+   "transitions": "queued > retry_scheduled > in_progress > retry_scheduled > in_progress > completed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 1,
+   "phone": "7000001011",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 104,
+   "talk_time_s": 90,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "in_progress > completed",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 2,
+   "phone": "7000001012",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 165,
+   "talk_time_s": 158,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "in_progress > completed",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 3,
+   "phone": "7000001013",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 158,
+   "talk_time_s": 142,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "in_progress > completed",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 4,
+   "phone": "7000001014",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 5,
+   "phone": "7000001015",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 6,
+   "phone": "7000001016",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 7,
+   "phone": "7000001017",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 8,
+   "phone": "7000001018",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 9,
+   "phone": "7000001019",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 10,
+   "phone": "7000001020",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 11,
+   "phone": "7000001021",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 12,
+   "phone": "7000001022",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 13,
+   "phone": "7000001023",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S8",
+   "row": 14,
+   "phone": "7000001024",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S9",
+   "row": 1,
+   "phone": "7000001025",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "cancelled",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S9",
+   "row": 2,
+   "phone": "7000001026",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "cancelled",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S9",
+   "row": 3,
+   "phone": "7000001027",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "cancelled",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S10",
+   "row": 1,
+   "phone": "7000001028",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 140,
+   "talk_time_s": 136,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "in_progress > completed",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S10",
+   "row": 2,
+   "phone": "7000001029",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 165,
+   "talk_time_s": 148,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "in_progress > completed",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S10",
+   "row": 3,
+   "phone": "7000001030",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 90,
+   "talk_time_s": 76,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "in_progress > completed",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S10",
+   "row": 4,
+   "phone": "7000001031",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S10",
+   "row": 5,
+   "phone": "7000001032",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S10",
+   "row": 6,
+   "phone": "7000001033",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S10",
+   "row": 7,
+   "phone": "7000001034",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S10",
+   "row": 8,
+   "phone": "7000001035",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S10",
+   "row": 9,
+   "phone": "7000001036",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S10",
+   "row": 10,
+   "phone": "7000001037",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "cancelled",
+   "echo_reason_outcome": "not_dialled_stopped / stopped",
+   "retry": "0 dial(s)",
+   "transitions": "cancelled",
+   "echo_campaign_status": "partially_completed",
+   "clarix_call_status": "CANCELLED",
+   "clarix_workflow_status": "CANCELLED",
+   "clarix_outcome": "stopped",
+   "match": "yes"
+  },
+  {
+   "scenario": "S12",
+   "row": 1,
+   "phone": "7000001038",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 108,
+   "talk_time_s": 104,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "completed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S12",
+   "row": 2,
+   "phone": "7000001039",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 204,
+   "talk_time_s": 186,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "completed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S12",
+   "row": 3,
+   "phone": "7000001040",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 119,
+   "talk_time_s": 114,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "queued > in_progress > completed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S12",
+   "row": 4,
+   "phone": "7000001041",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 188,
+   "talk_time_s": 177,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "queued > in_progress > completed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S12",
+   "row": 5,
+   "phone": "7000001042",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 117,
+   "talk_time_s": 103,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "queued > in_progress > completed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S12",
+   "row": 6,
+   "phone": "7000001043",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 191,
+   "talk_time_s": 187,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "queued > in_progress > completed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S11",
+   "row": 1,
+   "phone": "7000009999",
+   "ozonetel_status": "Answered",
+   "dial_status": "answered",
+   "customer_status": "answered",
+   "duration_s": 207,
+   "talk_time_s": 189,
+   "echo_call_status": "completed",
+   "echo_reason_outcome": "conversation / completed",
+   "retry": "1 dial(s)",
+   "transitions": "queued > in_progress > completed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "COMPLETED",
+   "clarix_workflow_status": "COMPLETED",
+   "clarix_outcome": "completed",
+   "match": "yes"
+  },
+  {
+   "scenario": "S11",
+   "row": 2,
+   "phone": "7000009999",
+   "ozonetel_status": "",
+   "dial_status": "",
+   "customer_status": "",
+   "duration_s": 0,
+   "talk_time_s": 0,
+   "echo_call_status": "input_validation_failed",
+   "echo_reason_outcome": "duplicate_row / repeated_number",
+   "retry": "0 dial(s)",
+   "transitions": "input_validation_failed",
+   "echo_campaign_status": "completed",
+   "clarix_call_status": "INPUT_VALIDATION_FAILED",
+   "clarix_workflow_status": "FAILED",
+   "clarix_outcome": "repeated_number",
+   "match": "yes"
+  }
+ ],
+ "scenarios": [
+  {
+   "id": "S1",
+   "name": "Successful call",
+   "sheet": "b091b530b73daaa70ffe9a9b",
+   "campaign": "priya-rfx-quote-agent-b091b530b73daaa70ffe9a9b-a8e4df6d",
+   "campaign_transitions": [
+    "running",
+    "completed"
+   ],
+   "expected": {
+    "rows": [
+     "completed"
+    ],
+    "campaign": "completed"
+   }
+  },
+  {
+   "id": "S2",
+   "name": "No Answer + retry",
+   "sheet": "40937bb6fc230bda04f889a7",
+   "campaign": "priya-rfx-quote-agent-40937bb6fc230bda04f889a7-9cd043ff",
+   "campaign_transitions": [
+    "running",
+    "completed"
+   ],
+   "expected": {
+    "rows": [
+     "retry_exhausted"
+    ],
+    "campaign": "completed",
+    "retrySeen": true,
+    "attempts": [
+     3
+    ]
+   }
+  },
+  {
+   "id": "S3",
+   "name": "Busy + retry, then answered",
+   "sheet": "ea6385f531ab7bd7030cd523",
+   "campaign": "priya-rfx-quote-agent-ea6385f531ab7bd7030cd523-6af45b9a",
+   "campaign_transitions": [
+    "running",
+    "completed"
+   ],
+   "expected": {
+    "rows": [
+     "completed"
+    ],
+    "campaign": "completed",
+    "retrySeen": true,
+    "attempts": [
+     3
+    ]
+   }
+  },
+  {
+   "id": "S4",
+   "name": "Invalid Number, no retry",
+   "sheet": "09aeeac2ac76a9e2e76deeb6",
+   "campaign": "priya-rfx-quote-agent-09aeeac2ac76a9e2e76deeb6-b16d0d69",
+   "campaign_transitions": [
+    "running",
+    "completed"
+   ],
+   "expected": {
+    "rows": [
+     "invalid_number"
+    ],
+    "campaign": "completed",
+    "attempts": [
+     1
+    ]
+   }
+  },
+  {
+   "id": "S5",
+   "name": "Unreachable",
+   "sheet": "c6664f40dadffd2200b3c9de",
+   "campaign": "priya-rfx-quote-agent-c6664f40dadffd2200b3c9de-7674d699",
+   "campaign_transitions": [
+    "running",
+    "completed"
+   ],
+   "expected": {
+    "rows": [
+     "retry_exhausted"
+    ],
+    "campaign": "completed",
+    "attempts": [
+     3
+    ]
+   }
+  },
+  {
+   "id": "S6",
+   "name": "Technical failure (provider exception)",
+   "sheet": "915ebf864f4480f22df07d2a",
+   "campaign": "priya-rfx-quote-agent-915ebf864f4480f22df07d2a-45c4d325",
+   "campaign_transitions": [
+    "running",
+    "completed"
+   ],
+   "expected": {
+    "rows": [
+     "retry_exhausted"
+    ],
+    "campaign": "completed",
+    "attempts": [
+     3
+    ]
+   }
+  },
+  {
+   "id": "S7",
+   "name": "Mixed results -> Completed",
+   "sheet": "baed7e8c5a4ff0fa4bae5a0b",
+   "campaign": "priya-rfx-quote-agent-baed7e8c5a4ff0fa4bae5a0b-8f8adf48",
+   "campaign_transitions": [
+    "running",
+    "completed"
+   ],
+   "expected": {
+    "rows": [
+     "completed",
+     "completed",
+     "invalid_number",
+     "completed",
+     "completed"
+    ],
+    "campaign": "completed"
+   }
+  },
+  {
+   "id": "S8",
+   "name": "Unprocessed calls -> Partially Completed (stopped in Echo)",
+   "sheet": "3762e09174ddcc04e225967e",
+   "campaign": "priya-rfx-quote-agent-3762e09174ddcc04e225967e-532fa7c2",
+   "campaign_transitions": [
+    "running",
+    "partially_completed"
+   ],
+   "expected": {
+    "campaign": "partially_completed"
+   }
+  },
+  {
+   "id": "S9",
+   "name": "Campaign cancellation (stopped before any dial)",
+   "sheet": "abadfe8a9176d8b06560f05b",
+   "campaign": "priya-rfx-quote-agent-abadfe8a9176d8b06560f05b-e613a7cb",
+   "campaign_transitions": [
+    "cancelled"
+   ],
+   "expected": {
+    "campaign": "cancelled",
+    "rows": [
+     "cancelled",
+     "cancelled",
+     "cancelled"
+    ]
+   }
+  },
+  {
+   "id": "S10",
+   "name": "Stop from Clarix reaches Echo (ECHO-162)",
+   "sheet": "542a4a73c61ca3955ed1d9cb",
+   "campaign": "priya-rfx-quote-agent-542a4a73c61ca3955ed1d9cb-fa9c125f",
+   "campaign_transitions": [
+    "running",
+    "partially_completed"
+   ],
+   "expected": {
+    "campaign": "partially_completed"
+   }
+  },
+  {
+   "id": "S12",
+   "name": "Pause and resume",
+   "sheet": "b0cdfcae538a0962cc1fb3b7",
+   "campaign": "priya-rfx-quote-agent-b0cdfcae538a0962cc1fb3b7-0cfc3d6c",
+   "campaign_transitions": [
+    "running",
+    "completed"
+   ],
+   "expected": {
+    "campaign": "completed",
+    "paused": true
+   }
+  },
+  {
+   "id": "S11",
+   "name": "Repeated phone number in one sheet",
+   "sheet": "40616ea5f336fcc27f6afcee",
+   "campaign": "priya-rfx-quote-agent-40616ea5f336fcc27f6afcee-da528273",
+   "campaign_transitions": [
+    "running",
+    "completed"
+   ],
+   "expected": {
+    "rows": [
+     "completed",
+     "input_validation_failed"
+    ],
+    "outcomes": [
+     "completed",
+     "repeated_number"
+    ]
+   }
+  }
+ ]
+}
