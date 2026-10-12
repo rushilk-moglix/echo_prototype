@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed, OnInit, HostListener, ViewChild } from '@angular/core';
+import { CampaignNamePipe } from '../../pipes/campaign-name.pipe';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { IconComponent } from '../../components/icon/icon.component';
@@ -23,14 +24,14 @@ import { outcomeView, dialSentence, telephonyLine, statusHover } from '../../uti
 @Component({
   selector: 'app-call-analysis',
   standalone: true,
-  imports: [RouterLink, IconComponent, PlayerComponent, HintComponent, GuideComponent, StatusReferenceComponent],
+  imports: [CampaignNamePipe, RouterLink, IconComponent, PlayerComponent, HintComponent, GuideComponent, StatusReferenceComponent],
   template: `
     <div class="page cp">
       <div class="cp-bar">
         <nav class="crumbs" aria-label="Breadcrumb">
           @if (cid()) {
             <a routerLink="/campaigns">Campaigns</a><span>/</span>
-            <a [routerLink]="['/campaigns', cid()]">{{ contact()?.campaign?.name || 'Campaign' }}</a>
+            <a [routerLink]="['/campaigns', cid()]">{{ (contact()?.campaign?.name | campaignName) || 'Campaign' }}</a>
           } @else {
             <a routerLink="/overview">Calls</a>
           }
@@ -79,6 +80,16 @@ import { outcomeView, dialSentence, telephonyLine, statusHover } from '../../uti
           <section class="card cp-convo">
             @if (callId()) {
               <div class="cp-player"><app-player #player [callId]="callId()" [recordingUrl]="call()?.recording_url || ''" [seconds]="call()?.duration_seconds || 0" [turns]="turnMarks()"></app-player></div>
+              @if (noAnswers(); as na) {
+                <!-- Never blank: a call without answers says why, and where it goes next. -->
+                <div class="note cp-why"><b>No answers saved: {{ na.label }}.</b>
+                  @if (na.key === 'hung_up' || na.key === 'not_saved') { Echo read the transcript again and found nothing it could keep. This contact is in <a class="link" routerLink="/follow-ups">Follow ups</a>. }
+                  @else if (na.key === 'never_spoke' || na.key === 'machine' || na.key === 'no_audio') { The agent's retry rules decide whether it is called again. }
+                </div>
+              }
+              @if (fromTranscript()) {
+                <div class="note cp-why"><b>Answers read from the transcript.</b> The caller hung up before the agent saved anything, so Echo read the call again and kept what it could.</div>
+              }
               @if (summary()) {
                 <div class="cp-sum" [class.open]="sumOpen()">
                   <app-icon name="fileText" [size]="14"></app-icon>
@@ -266,6 +277,9 @@ export class CallAnalysisComponent implements OnInit {
   dialSentence = dialSentence;
   phone = computed(() => this.contact()?.contact?.phone || this.call()?.phone || '');
   summary = computed(() => this.analysis()?.executive_summary || this.call()?.summary || '');
+  /** Why this call has no answers, from the same fixed list as the campaign page and the results file. */
+  noAnswers = computed(() => this.contact()?.no_answers || this.call()?.no_answers || null);
+  fromTranscript = computed(() => (this.contact()?.answers_source || this.call()?.answers_source) === 'transcript');
   /** Side tabs that have something to show; the first one opens. */
   sideTabs = computed(() => {
     const c = this.contact();

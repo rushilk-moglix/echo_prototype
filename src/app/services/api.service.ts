@@ -156,6 +156,10 @@ export class ApiService {
   reportSummary(params: Record<string, string> = {}): Promise<any> {
     return this.getJSON(ENDPOINTS.reports.summary, params);
   }
+  /** The contacts behind one stat or one result of the report. */
+  reportRows(params: Record<string, string> = {}): Promise<any> {
+    return this.getJSON(ENDPOINTS.reports.rows, params);
+  }
   /** The same report as a spreadsheet with five tabs. */
   reportExportUrl(params: Record<string, string> = {}): string {
     return this.apiUrl(ENDPOINTS.reports.exportXlsx, params);
@@ -207,8 +211,12 @@ export class ApiService {
   agents(): Promise<any> {
     return this.getJSON(ENDPOINTS.agents.forTester, {}, this.webrtcBase);
   }
-  agentList(): Promise<any> {
-    return this.getJSON(ENDPOINTS.agents.list);
+  agentList(archived = false): Promise<any> {
+    return this.getJSON(ENDPOINTS.agents.list, archived ? { archived: '1' } : {});
+  }
+  /** Bring an archived agent back with its prompt and fields. */
+  restoreAgent(key: string): Promise<any> {
+    return this.sendJSON(`${ENDPOINTS.agents.remove(key)}/restore`, 'POST', {});
   }
   agentMeta(): Promise<any> {
     return this.getJSON(ENDPOINTS.agents.meta);
@@ -275,8 +283,12 @@ export class ApiService {
 
   // ── Campaigns ──────────────────────────────────────────────────────────────
 
-  campaigns(): Promise<any> {
-    return this.getJSON(ENDPOINTS.campaigns.list);
+  campaigns(archived = false): Promise<any> {
+    return this.getJSON(ENDPOINTS.campaigns.list, archived ? { archived: '1' } : {});
+  }
+  /** Bring an archived campaign back to the list. */
+  restoreCampaign(id: string): Promise<any> {
+    return this.sendJSON(`${ENDPOINTS.campaigns.detail(id)}/restore`, 'POST', {});
   }
   campaign(id: string): Promise<any> {
     return this.getJSON(ENDPOINTS.campaigns.detail(id));

@@ -1,6 +1,8 @@
 import { campaignStatus, outcomeView, statusHover, GROUPS } from '../../utils/status';
+import { StatRowComponent } from '../../components/stat-row/stat-row.component';
 import { ConfirmComponent } from '../../components/confirm/confirm.component';
 import { Component, inject, signal, OnInit, OnDestroy, ViewChild, ElementRef, computed } from '@angular/core';
+import { CampaignNamePipe } from '../../pipes/campaign-name.pipe';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { IconComponent } from '../../components/icon/icon.component';
@@ -16,7 +18,7 @@ import { fmtSecs } from '../../utils/format';
 @Component({
   selector: 'app-campaign-detail',
   standalone: true,
-  imports: [RouterLink, FormsModule, GuideComponent, HintComponent, StatusReferenceComponent, IconComponent, ResponsesTableComponent, ContactsBrowserComponent, ColumnMappingComponent, ConfirmComponent],
+  imports: [CampaignNamePipe, RouterLink, FormsModule, GuideComponent, HintComponent, StatusReferenceComponent, IconComponent, ResponsesTableComponent, ContactsBrowserComponent, ColumnMappingComponent, ConfirmComponent, StatRowComponent],
   templateUrl: './campaign-detail.component.html',
 })
 export class CampaignDetailComponent implements OnInit, OnDestroy {
@@ -26,6 +28,9 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   @ViewChild('inputRef') inputRef!: ElementRef<HTMLInputElement>;
 
   id = '';
+  /** Result and stats of this campaign, with the rows behind each number (the same row as the Overview). */
+  stats = signal<any>(null);
+  statScope = signal<Record<string, string>>({});
   campaign = signal<any>(null);
   tab = signal<'responses' | 'contacts'>('contacts');
   fmtSecs = fmtSecs;
@@ -145,6 +150,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       const c = await this.api.campaign(this.id);
       this.campaign.set(c);
       const [ct, rs] = await Promise.all([this.api.campaignContacts(this.id), this.api.campaignResponses(this.id)]);
+      this.statScope.set({ days: '3650', campaign_id: this.id });
+      this.api.reportSummary({ days: '3650', campaign_id: this.id }).then((r) => this.stats.set(r)).catch(() => {});
       this.contacts.set(ct.contacts || []);
       this.responses.set(rs.responses || []);
       this.error.set('');

@@ -54,8 +54,12 @@ import { fmtTime } from '../../utils/format';
                    phone here; the id is still one hover away, not lost. -->
               <span class="mono" style="font-size: 12px" [title]="'id: ' + r.primary_id">{{ r.phone || r.primary_id }}</span>
               <span style="min-width: 0">{{ r.name || r.phone || '—' }}</span>
-              <span><span [class]="'tag ' + st(r).cls" [title]="st(r).help">{{ st(r).label }}</span></span>
-              @for (v of outVars; track v.key) {
+              <span><span [class]="'tag ' + st(r).cls" [title]="st(r).help">{{ st(r).label }}</span>@if (r.answers_source === 'transcript') { <span class="tag info" title="The caller hung up before the agent saved anything. Echo read the transcript and kept what it could.">From the transcript</span> }</span>
+              @if (r.no_answers) {
+                <!-- Never a row of dashes: a row without answers says why. -->
+                <span class="no-answers" [style.grid-column]="'span ' + outVars.length">No answers: {{ r.no_answers.label }}</span>
+              }
+              @for (v of r.no_answers ? [] : outVars; track v.key) {
                 @if (isBlank(r.outputs?.[v.key])) {
                   <span style="color: var(--ds-text-placeholder)">—</span>
                 } @else {

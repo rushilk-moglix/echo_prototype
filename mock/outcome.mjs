@@ -136,3 +136,21 @@ export function contactOutcome(row) {
   if (s === 'completed') return RES[row.call_result] || 'completed';
   return OLD[s] || 'network_error';
 }
+
+/**
+ * Why a row has no answers. One fixed list for every agent; null when answers were saved.
+ * A row is never blank without one: the campaign page, the call page, the results file and Clarix all show it.
+ */
+export function noAnswers(row) {
+  if (row.outputs && Object.keys(row.outputs).length) return null;
+  const o = contactOutcome(row); const def = OUTCOMES[o] || {}; const g = def.group;
+  if (g === 'in_progress') return { key: 'in_progress', label: 'Still in progress' };
+  if (g === 'not_dialled') return { key: 'not_dialled', label: `Not dialled: ${def.label}` };
+  if (g === 'not_reached') return { key: 'not_reached', label: `Not reached: ${def.label}` };
+  if (o === 'no_reply') return { key: 'never_spoke', label: 'Caller never spoke' };
+  if (o === 'voicemail') return { key: 'machine', label: 'Voicemail or machine' };
+  if (o === 'call_dropped') return { key: 'no_audio', label: 'No audio on the call' };
+  if (g === 'failed') return { key: 'failed', label: `Call failed: ${def.label}` };
+  if (o === 'caller_hung_up') return { key: 'hung_up', label: 'Hung up before answering' };
+  return { key: 'not_saved', label: 'Answers not saved' };
+}

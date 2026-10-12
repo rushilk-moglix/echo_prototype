@@ -58,6 +58,7 @@ type SyncState = { label: string; cls: string; title: string };
             <button [class.on]="filter() === 'all'" (click)="filter.set('all')">All {{ rows().length }}</button>
             <button [class.on]="filter() === 'used'" (click)="filter.set('used')">In use {{ usedCount() }}</button>
             <button [class.on]="filter() === 'unrouted'" (click)="filter.set('unrouted')">No flow {{ unroutedCount() }}</button>
+            <button [class.on]="archived()" (click)="archived.set(!archived()); load()" title="Archived agents keep their prompt and fields and can be restored">Archived</button>
           </div>
           <span class="spacer"></span>
           <span class="row-sub">Sorted by last change</span>
@@ -115,7 +116,11 @@ type SyncState = { label: string; cls: string; title: string };
                         <button (click)="syncNow(a)" [disabled]="syncing() === a.key"><app-icon name="refresh" [size]="13"></app-icon> Send to {{ platformLabel(a.synced_platform) }} now</button>
                       }
                       <hr />
-                      <button class="danger" (click)="askDelete(a)"><app-icon name="trash" [size]="13"></app-icon> Delete</button>
+                      @if (archived()) {
+                        <button (click)="restore(a)"><app-icon name="archive" [size]="13"></app-icon> Restore</button>
+                      } @else {
+                        <button (click)="askDelete(a)"><app-icon name="archive" [size]="13"></app-icon> Archive</button>
+                      }
                     </div>
                   }
                 </span>
@@ -166,9 +171,9 @@ type SyncState = { label: string; cls: string; title: string };
 
     @if (deleting(); as d) {
       <app-confirm
-        [title]="'Delete ' + d.label + '?'"
-        [body]="d.used_by ? 'It is used by ' + d.used_by + ' campaign' + (d.used_by === 1 ? '' : 's') + '. Their calls and results stay, but no new calls can use this agent. This cannot be undone.' : 'This removes its prompt and call data. This cannot be undone.'"
-        confirmLabel="Delete agent" [danger]="true" [busy]="busy()"
+        [title]="'Archive ' + d.label + '?'"
+        [body]="d.used_by ? 'It is used by ' + d.used_by + ' campaign' + (d.used_by === 1 ? '' : 's') + '. Their calls and results stay, but no new calls can use this agent until it is restored.' : 'It leaves this list. Its prompt, call data and answers are kept, and you can restore it from Archived.'"
+        confirmLabel="Archive agent" [danger]="false" [busy]="busy()"
         (confirm)="confirmDelete()" (cancel)="deleting.set(null)"></app-confirm>
     }
 
@@ -189,6 +194,12 @@ export class AgentsComponent implements OnInit {
   syncPlatforms = signal<(SyncPlatformOption & { connected?: boolean })[]>([]);
   q = signal('');
   filter = signal<'all' | 'used' | 'unrouted'>('all');
+  /** Showing archived agents instead of the live list. */
+  archived = signal(false);
+  async restore(a: AgentRow): Promise<void> {
+    this.menuFor.set(null);
+    try { await this.api.restoreAgent(a.key); this.rows.update((l) => l.filter((r) => r.key !== a.key)); this.say(`${a.label} restored.`); } catch (e: any) { this.error.set(e.message); }
+  }
   menuFor = signal<string | null>(null);
   syncing = signal<string | null>(null);
   toast = signal('');
@@ -231,7 +242,7 @@ export class AgentsComponent implements OnInit {
   async load(): Promise<void> {
     try {
       const [list, tester, camps] = await Promise.all([
-        this.api.agentList(),
+        this.api.agentList(this.archived()),
         this.api.agents().catch(() => []),
         this.api.campaigns().catch(() => ({ campaigns: [] })),
       ]);
@@ -344,7 +355,7 @@ export class AgentsComponent implements OnInit {
     try {
       const out = await this.api.deleteAgent(a.key);
       this.rows.update((l) => l.filter((r) => r.key !== a.key));
-      this.say(out?.note || `${a.label} deleted.`);
+      this.say(`${a.label} archived. Restore it from Archived.` + (out?.note ? ' ' + out.note : ''));
       this.deleting.set(null);
     } catch (e: any) {
       this.error.set(e.message);

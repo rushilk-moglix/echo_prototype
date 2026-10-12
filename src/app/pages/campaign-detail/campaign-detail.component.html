@@ -8,7 +8,7 @@
     <div class="page-head">
       <div style="min-width: 0">
         <a routerLink="/campaigns" class="crumb"><app-icon name="back" [size]="12"></app-icon> Campaigns</a>
-        <h1 class="page-title" [title]="campaign().campaign_id">{{ campaign().name }}</h1>
+        <h1 class="page-title" [title]="campaign().campaign_id">{{ campaign().name | campaignName }}</h1>
         <p class="page-sub">
           <span [class]="'tag ' + campStatus().cls" [title]="campStatus().hint || ''">{{ campStatus().label }}</span>
           · Agent
@@ -83,6 +83,10 @@
           @for (g of groupCounts(); track g.key) { @if (g.count) { <span [class]="'g-' + g.key" [style.width.%]="g.count / contacts().length * 100" [title]="g.label + ': ' + g.count"></span> } }
         </div>
       </div>
+    }
+
+    @if (stats()?.stats && contacts().length) {
+      <app-stat-row [stats]="stats().stats" [result]="stats().result" [scope]="statScope()"></app-stat-row>
     }
 
     <div class="card">

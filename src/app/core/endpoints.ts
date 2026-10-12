@@ -82,6 +82,7 @@ export const ENDPOINTS = {
   /** Reports: the Overview numbers split by anything, the spreadsheet of the same, and reports sent by email. */
   reports: {
     summary: '/api/reports/summary',
+    rows: '/api/reports/rows',
     exportXlsx: '/api/reports/export.xlsx',
     schedules: '/api/report-schedules',
     schedule: (id: string) => `/api/report-schedules/${seg(id)}`,

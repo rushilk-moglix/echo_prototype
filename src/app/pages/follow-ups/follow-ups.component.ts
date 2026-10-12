@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { CampaignNamePipe } from '../../pipes/campaign-name.pipe';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
@@ -15,7 +16,7 @@ import { ConfirmComponent } from '../../components/confirm/confirm.component';
 @Component({
   selector: 'app-follow-ups',
   standalone: true,
-  imports: [FormsModule, IconComponent, HintComponent, ConfirmComponent],
+  imports: [CampaignNamePipe, FormsModule, IconComponent, HintComponent, ConfirmComponent],
   template: `
     <div class="page">
       <div class="page-head">
@@ -56,7 +57,7 @@ import { ConfirmComponent } from '../../components/confirm/confirm.component';
               <button class="fu-main" (click)="toggle(r)" [attr.aria-expanded]="isOpen(r)">
                 <span class="fu-who"><b>{{ r.name || r.phone }}</b><span class="row-sub mono">{{ r.phone }}</span></span>
                 <span><span class="tag" [class.bad]="r.reason !== 'no_more_tries'" [class.warn]="r.reason === 'no_more_tries'" [title]="telephony(r)">{{ r.reason_label }}</span><span class="row-sub fu-since">{{ r.dials }} dial{{ r.dials === 1 ? '' : 's' }} · {{ ago(r.since) }}</span></span>
-                <span class="row-sub fu-camp" [title]="r.campaign_name">{{ r.campaign_name }}</span>
+                <span class="row-sub fu-camp" [title]="r.campaign_name">{{ r.campaign_name | campaignName }}</span>
                 <span class="fu-owner">{{ r.owner || 'No owner yet' }}</span>
                 <span class="row-sub fu-note" [title]="lastNote(r)">{{ state() === 'done' ? r.closed_as : lastNote(r) || 'No notes yet' }}</span>
                 <span class="fu-chev"><app-icon [name]="isOpen(r) ? 'chevronDown' : 'chevronRight'" [size]="15"></app-icon></span>

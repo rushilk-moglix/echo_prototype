@@ -28,6 +28,9 @@
         <button [class.on]="sourceFilter() === 'clarix'" (click)="sourceFilter.set('clarix')">From Clarix</button>
         <button [class.on]="sourceFilter() === 'internal'" (click)="sourceFilter.set('internal')">Made in Echo</button>
       </div>
+      <div class="seg" aria-label="Archived">
+        <button [class.on]="archived()" (click)="archived.set(!archived()); load()" title="Archived campaigns keep their calls and results and can be restored">Archived</button>
+      </div>
     </div>
     @if (loading()) {
       <div class="empty"><div class="empty-title">Loading…</div></div>
@@ -51,7 +54,7 @@
                    list a run was, and the id is on the campaign's own page. -->
               <span style="min-width: 0" [title]="c.description || c.campaign_id">
                 <div class="row-title">
-                  {{ c.name }}
+                  {{ c.name | campaignName }}
                   @if (c.source && c.source !== 'internal') {
                     <span class="tag info" [title]="'Sent from ' + c.source">From {{ c.source === 'clarix' ? 'Clarix' : c.source }}</span>
                   }
@@ -78,11 +81,15 @@
                   <a class="icon-btn" [href]="api.campaignExportUrl(c.campaign_id)" download title="All transcripts and recordings (zip)" aria-label="Download transcripts and recordings"><app-icon name="zip" [size]="14"></app-icon></a>
                 }
                 <a class="icon-btn" [routerLink]="['/agents', c.agent]" title="Open the agent" aria-label="Open the agent"><app-icon name="bot" [size]="14"></app-icon></a>
-                <button class="row-del" (click)="deletingAsk.set(c)"
-                        [disabled]="deleting() === c.campaign_id"
-                        [title]="'Delete ' + c.name">
-                  <app-icon name="trash" [size]="13"></app-icon>
-                </button>
+                @if (archived()) {
+                  <button class="btn btn-sm" (click)="restore(c)" [title]="'Restore ' + c.name">Restore</button>
+                } @else {
+                  <button class="row-del" (click)="deletingAsk.set(c)"
+                          [disabled]="deleting() === c.campaign_id"
+                          [title]="'Archive ' + c.name" [attr.aria-label]="'Archive ' + c.name">
+                    <app-icon name="archive" [size]="13"></app-icon>
+                  </button>
+                }
               </span>
             </div>
           }
@@ -93,7 +100,7 @@
 </div>
 
 @if (deletingAsk(); as d) {
-  <app-confirm [title]="'Delete ' + d.name + '?'"
-    [body]="(d.responses_count ? 'Its ' + d.responses_count + ' call results are deleted with it. ' : '') + 'The uploaded list is removed. This cannot be undone.'"
-    confirmLabel="Delete campaign" [danger]="true" [busy]="deleting() === d.campaign_id" (confirm)="remove(d)" (cancel)="deletingAsk.set(null)"></app-confirm>
+  <app-confirm [title]="'Archive ' + d.name + '?'"
+    [body]="'It leaves this list. Its calls, answers and recordings are kept, and you can restore it from Archived at any time.'"
+    confirmLabel="Archive campaign" [danger]="false" [busy]="deleting() === d.campaign_id" (confirm)="remove(d)" (cancel)="deletingAsk.set(null)"></app-confirm>
 }

@@ -1,6 +1,7 @@
 import { campaignStatus, GROUPS, groupLabel } from '../../utils/status';
 import { ConfirmComponent } from '../../components/confirm/confirm.component';
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { CampaignNamePipe } from '../../pipes/campaign-name.pipe';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
@@ -11,7 +12,7 @@ import { NewCampaignComponent } from './new-campaign.component';
 @Component({
   selector: 'app-campaigns',
   standalone: true,
-  imports: [FormsModule, IconComponent, ConfirmComponent, RouterLink, NewCampaignComponent],
+  imports: [CampaignNamePipe, FormsModule, IconComponent, ConfirmComponent, RouterLink, NewCampaignComponent],
   templateUrl: './campaigns.component.html',
 })
 export class CampaignsComponent implements OnInit {
@@ -51,6 +52,11 @@ export class CampaignsComponent implements OnInit {
   statusFilter = signal<'all' | 'open' | 'done'>('all');
   sourceFilter = signal<'all' | 'clarix' | 'internal'>('all');
   deletingAsk = signal<any>(null);
+  /** Showing archived campaigns instead of the live list. Nothing is ever deleted for good. */
+  archived = signal(false);
+  async restore(campaign: any): Promise<void> {
+    try { await this.api.restoreCampaign(campaign.campaign_id); await this.load(); } catch (e: any) { this.error.set(e.message); }
+  }
   openCount = computed(() => this.campaigns().filter((c) => !campaignStatus(c.status).final).length);
   shown = computed(() => {
     const term = this.q().trim().toLowerCase();
@@ -63,7 +69,7 @@ export class CampaignsComponent implements OnInit {
   /** Rows that reached a person or machine. New backends send counts; older ones only responses_count. */
   async load(): Promise<void> {
     try {
-      const r = await this.api.campaigns();
+      const r = await this.api.campaigns(this.archived());
       this.campaigns.set(r.campaigns || []);
       this.storage.set(r.storage_connected !== false);
       this.error.set('');

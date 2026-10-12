@@ -2,6 +2,7 @@
 /** Older call result words to the outcome words used everywhere else (PRD-ECHO-19). */
 const RESULT_TO_OUTCOME: Record<string, string> = { conversation: 'completed', no_response: 'no_reply', disconnected_early: 'caller_hung_up', voicemail: 'voicemail', technical_drop: 'call_dropped' };
 import { Component, inject, signal, computed, OnInit, OnDestroy } from '@angular/core';
+import { CampaignNamePipe } from '../../pipes/campaign-name.pipe';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ApiService } from '../../services/api.service';
@@ -12,6 +13,7 @@ import { HintComponent } from '../../components/hint/hint.component';
 import { StatusReferenceComponent } from '../../components/status-reference/status-reference.component';
 import { GROUPS, outcomeView as ov, statusHover } from '../../utils/status';
 import { fmtNum, fmtSecs } from '../../utils/format';
+import { StatRowComponent } from '../../components/stat-row/stat-row.component';
 import { ReportShareComponent } from '../../components/report-share/report-share.component';
 import { AuthService } from '../../services/auth.service';
 
@@ -23,7 +25,7 @@ import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-overview',
   standalone: true,
-  imports: [
+  imports: [CampaignNamePipe, 
     FormsModule,
     IconComponent,
     FmtDurationPipe,
@@ -31,6 +33,7 @@ import { AuthService } from '../../services/auth.service';
     HintComponent,
     StatusReferenceComponent,
     ReportShareComponent,
+    StatRowComponent,
   ],
   template: `
     <div class="page">
@@ -70,6 +73,10 @@ import { AuthService } from '../../services/auth.service';
           <div><app-icon name="timer" [size]="13"></app-icon> Still in progress <app-hint text="Calls Waiting, Calling, On call or with a retry booked."></app-hint><b>{{ g()['in_progress'] || 0 }}</b></div>
         </div>
       </div>
+
+      @if (report()?.stats) {
+        <app-stat-row [stats]="report().stats" [result]="report().result" [scope]="rowScope()"></app-stat-row>
+      }
 
       <div class="card ov-mix">
         <div class="ov-mix-head"><span class="card-title">Call status</span><app-guide topic="outcomes"></app-guide><span style="flex: 1"></span><app-status-reference></app-status-reference></div>
@@ -209,7 +216,7 @@ import { AuthService } from '../../services/auth.service';
           <label class="search"><app-icon name="search" [size]="14"></app-icon><input class="input" type="search" placeholder="Search name or number" [ngModel]="search()" (ngModelChange)="onSearch($event)" aria-label="Search calls" /></label>
           <select class="select" [ngModel]="campaign()" (ngModelChange)="setFilter('campaign', $event)" aria-label="Campaign">
             <option value="">All campaigns</option>
-            @for (c of campaigns(); track c.campaign_id) { <option [value]="c.campaign_id">{{ c.name }}</option> }
+            @for (c of campaigns(); track c.campaign_id) { <option [value]="c.campaign_id">{{ c.name | campaignName }}</option> }
           </select>
           <select class="select" [ngModel]="range()" (ngModelChange)="setFilter('range', $event)" aria-label="When">
             @for (r of RANGES; track r.key) { <option [value]="r.key">{{ r.label }}</option> }
@@ -257,6 +264,8 @@ export class OverviewComponent implements OnInit, OnDestroy {
   // Compare: the report under the funnel. Share sends exactly this.
   readonly BYS = [{ key: 'campaign', label: 'Campaign' }, { key: 'agent', label: 'Agent' }, { key: 'day', label: 'Day' }];
   report = signal<any>(null);
+  /** Scope of the lists behind the stats: the same period and agent as the page. */
+  rowScope = computed(() => ({ days: String(this.days()), agent: this.agent() }));
   by = signal('campaign');
   // One agent, or all. Nothing about the agent is assumed: its answers and its file columns come from its own setup.
   agent = signal('');
@@ -283,7 +292,7 @@ export class OverviewComponent implements OnInit, OnDestroy {
   private cap(s: string): string { return s ? s[0].toUpperCase() + s.slice(1) : s; }
   pc(a: number, b: number): number { return b ? Math.round((a / b) * 100) : 0; }
   setBy(k: string): void { this.by.set(k); this.showAll.set(false); this.load(); }
-  rowLabel(r: any): string { return this.by() === 'day' ? this.dayLabel(r.label) : r.label; }
+  rowLabel(r: any): string { return this.by() === 'day' ? this.dayLabel(r.label) : this.by() === 'campaign' ? String(r.label || '').replace(/_[0-9a-f]{20,}$/i, '') : r.label; }
   dayLabel(d: string): string { return new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' }); }
   goFollowUps(): void { this.router.navigate(['/follow-ups']); }
   private searchTimer: any = null;
