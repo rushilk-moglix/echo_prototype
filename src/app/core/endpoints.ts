@@ -144,6 +144,7 @@ export const ENDPOINTS = {
     contactDetail: (id: string, primaryId: string) =>
       `/api/campaigns/${seg(id)}/contacts/${seg(primaryId)}`,
     responses: (id: string) => `/api/campaigns/${seg(id)}/responses`,
+    rows: (id: string) => `/api/campaigns/${seg(id)}/rows`,
     upload: (id: string) => `/api/campaigns/${seg(id)}/upload`,
     dial: (id: string) => `/api/campaigns/${seg(id)}/dial`,
     /** Ends a running campaign; rows not yet dialled become Cancelled. */

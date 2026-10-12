@@ -1,7 +1,7 @@
 // PI Industries pilot workspace for the local mock (Sprint ECHO-26Q4-S0: ECHO-140 agent, ECHO-206 access).
 // The agent uses the generic Input file settings (PRD-ECHO-19): one file row per purchase order line,
 // rows grouped by supplier code, at most 8 rows per call, one answer per row. All names, numbers and codes are synthetic.
-import { planAttempts, reOutcome } from './ozonetel.mjs';
+import { groupedCampaign, day } from './rows-seed.mjs';
 
 export const PI_ORG = { org_id: 'org_pi', org_name: 'PI Industries (pilot)', role: 'org_admin' };
 export const PI_ROUTE = { name: 'PI_packaging_followup', type: 'IVR', did: '08000000201', org_id: 'org_pi' };
@@ -76,7 +76,10 @@ export function piAgent(now) {
       { key: 'due_date', type: 'date', transform: '', sample: '05/10/2026', share_on_call: true },
     ],
     input_plan: { mode: 'group', group_by: 'supplier_code', call_columns: ['supplier_code', 'supplier_name', 'contact_person', 'phone_number', 'plant'],
-      row_columns: ['po_number', 'item', 'pending_qty', 'due_date'], order_by: 'due_date', order_dir: 'asc', max_rows: 8, overflow: 'split', answers_key: 'rows' },
+      row_columns: ['po_number', 'item', 'pending_qty', 'due_date'], order_by: 'due_date', order_dir: 'asc', max_rows: 8, overflow: 'split', answers_key: 'rows',
+      // Rows settings added with the rethink: how a row is said, a time limit, what makes a row the same row next time, and long lists.
+      say_as: '{item}, {pending_qty} pending', max_minutes: 10, identity: ['po_number'], remember: true, list_style: 'one_by_one', check_in_after: 5,
+      skip: [{ column: 'pending_qty', op: 'is', value: '0' }] },
     output_variables: [
       { key: 'call_result', label: 'Call result', type: 'enum', options: ['completed', 'callback_requested', 'wrong_contact', 'refused'], description: 'What the supplier agreed to; the platform call status is separate', required: true },
       { key: 'rows', label: 'Answer for each row', type: 'list', fields: ROW_ANSWERS, description: 'One entry per row on the call, covered or not', required: true },
@@ -111,77 +114,24 @@ const SUPPLIERS = [
       out: Array.from({ length: 8 }, (_, i) => (i === 7 ? { dispatch_status: 'not_covered' } : { dispatch_status: i % 3 === 0 ? 'rescheduled' : 'scheduled', lots: `${1000 + i * 250}@+${5 + i}`, date_change_count: i % 3 === 0 ? 1 : 0, delay_reason: i % 3 === 0 ? 'Board shortage' : '' })) },
     { final: { status: 'retry_scheduled', reason: 'destination_busy', attempts: 1, next_attempt_in_min: 40 }, out: null }] },
   { code: 'SUP-1005', name: 'Supplier E Closures', lines: [['Trigger sprayer', 6000]], calls: [{ final: { status: 'retry_scheduled', reason: 'destination_busy', attempts: 1, next_attempt_in_min: 55 }, out: null }] },
+  // The caller hung up after the third row. Each row was saved as it was answered, so three are kept and two are asked on the next try.
+  { code: 'SUP-1007', name: 'Supplier G Labels', lines: [['Label 60x40', 5000, { last: 'scheduled, 5000 on the 9th' }], ['Label 100x70', 3000], ['Hologram seal', 12000], ['Sleeve 250ml', 8000], ['Sleeve 500ml', 6000],
+      ['Tamper band', 9000, { skip: 'Settled on the last upload: dispatched in full' }]],
+    calls: [{ final: { status: 'completed', result: 'disconnected_early', attempts: 1 }, dropped: { next_attempt_in_min: 35 },
+      out: [{ dispatch_status: 'rescheduled', lots: '5000@+6', delay_reason: 'Plate change', date_change_count: 2 }, { dispatch_status: 'scheduled', lots: '3000@+2' }, { dispatch_status: 'dispatched', dispatched_qty: 12000, dispatch_date: '-2', lr_or_invoice: 'LR-90417' }] }] },
   { code: 'SUP-1006', name: 'Supplier F Films', lines: [['Laminate roll', 90], ['Pouch 1kg', 12000]], calls: [{ final: { status: 'retry_exhausted', reason: 'no_answer', attempts: 3 }, out: null }] },
 ];
 
-const day = (base, off) => { if (off === undefined || off === '') return ''; const d = new Date(base); d.setUTCDate(d.getUTCDate() + Number(off)); return d.toISOString().slice(0, 10); };
-function lotDates(lots, base) { return lots ? lots.split(';').map((x) => { const [q, o] = x.trim().split('@'); return `${q}@${day(base, o)}`; }).join('; ') : ''; }
-
 export function piCampaign(now, uuid) {
-  const created = new Date(Date.parse(now) - 3 * 3600000).toISOString();
-  const camp = { campaign_id: `pi-packaging-follow-up-${uuid}`, name: 'PI packaging follow up - week 40', agent: 'pi_packaging_followup', org_id: 'org_pi',
-    provider: 'gemini', source: 'internal', direction: 'outbound', description: 'Pilot batch 1', created_at: created, contacts: [], clarix_batch_id: null, file_rows: 0 };
-  const calls = [];
-  let fileRow = 0, k = 0;
-  SUPPLIERS.forEach((s, i) => {
-    const po = (n) => `45000${String(1000 + i * 20 + n).padStart(5, '0')}/${(n + 1) * 10}`;
-    const phone = `90000002${String(i + 1).padStart(2, '0')}`;
-    const rows = s.lines.map(([item, qty], n) => ({ row: ++fileRow, values: { po_number: po(n), item, pending_qty: String(qty), due_date: day(created, n - 1).split('-').reverse().join('/') } }));
-    camp.file_rows = fileRow;
-    s.calls.forEach((c, part) => {
-      const mine = rows.slice(part * 8, part * 8 + 8);
-      const items = mine.map((r, n) => ({ n: n + 1, row: r.row, ref: null, values: r.values }));
-      const key = s.calls.length > 1 ? `${s.code} (${part + 1} of ${s.calls.length})` : s.code;
-      const context = { supplier_code: s.code, supplier_name: s.name, contact_person: 'Test Contact', phone_number: phone, plant: `Plant ${1 + (i % 2)}`,
-        row_count: String(items.length), rows: items.map((it) => `${it.n}. ${Object.entries(it.values).map(([a, b]) => `${a}: ${b}`).join(' · ')}`).join('\n') };
-      const row = { primary_id: key, name: s.name, phone, context, row: mine[0].row, items, part: part + 1, parts: s.calls.length, not_covered_rows: [],
-        status: 'pending', outputs: {}, final: c.final, dispatched_at: new Date(Date.parse(created) + k++ * 90000).toISOString() };
-      row.attempts_detail = planAttempts({ seed: `${camp.campaign_id}:${key}`, final: c.final, dispatchedAt: row.dispatched_at, did: PI_ROUTE.did });
-      row.attempts = row.attempts_detail.length;
-      const last = row.attempts_detail[row.attempts_detail.length - 1];
-      if (c.out) {
-        const base = last.ended_at;
-        const answers = items.map((it, n) => {
-          const o = c.out[n] || { dispatch_status: 'not_covered' };
-          return { row: it.n, ...o, lots: lotDates(o.lots, base), ready_date: day(base, o.ready_date), estimate_date: day(base, o.estimate_date), dispatch_date: day(base, o.dispatch_date) };
-        });
-        const covered = answers.filter((l) => l.dispatch_status !== 'not_covered').length;
-        const nextF = answers.map((l) => l.estimate_date).filter(Boolean).sort()[0] || '';
-        const outputs = { call_result: 'completed', rows: answers, rows_covered: covered, next_followup_date: nextF,
-          escalate_to: answers.some((l) => /quality|disputed/.test(l.dispatch_status)) ? 'quality' : answers.some((l) => l.dispatch_status === 'artwork_hold') ? 'buyer' : 'none',
-          supplier_verbatim: answers.find((l) => l.supplier_says)?.supplier_says || '' };
-        const id = `40715920${String(10000000 + k * 7919).slice(0, 8)}`;
-        const started = new Date(Date.parse(last.started_at) + last.ring_seconds * 1000);
-        const turns = [
-          ['AGENT_TURN', `Namaste, main Hetal, PI Industries packaging procurement se. Kya meri baat ${s.name} se ho rahi hai?`],
-          ['USER_TURN', 'Haan ji, boliye.'],
-          ['AGENT_TURN', `Aapke ${items.length} open rows hain. Pehla: ${items[0].values.item}, pending ${items[0].values.pending_qty}. Dispatch plan kya hai?`],
-          ['USER_TURN', 'Ji, iska plan bata deta hoon.'],
-          ['AGENT_TURN', 'Theek hai, maine note kar liya. Main read back karti hoon.'],
-          ['USER_TURN', 'Haan, sahi hai.'],
-        ];
-        const dur = last.talk_seconds;
-        const events = [{ kind: 'CALL_CONTEXT', ts: started.toISOString(), context },
-          ...turns.map(([kind, text], t) => ({ kind, text, ts: new Date(started.getTime() + (t + 1) * (dur * 1000 / 8)).toISOString() })),
-          { kind: 'TOOL_CALL', tool: 'submit_call_outputs', args: outputs, ts: new Date(started.getTime() + dur * 1000 - 2000).toISOString() }];
-        last.call_id = id;
-        calls.push({ call_id: id, called_number: PI_ROUTE.did, agent: camp.agent, agent_key: `ozonetel/${camp.agent}/gemini`, campaign_id: camp.campaign_id, org_id: 'org_pi',
-          contact_name: s.name, phone, duration_seconds: dur, started_at: started.toISOString(), ended_at: new Date(started.getTime() + dur * 1000).toISOString(),
-          mode: 'telephony', num_turns: turns.length, provider: 'gemini', source: 'campaign', status: 'completed',
-          summary: `${covered} of ${items.length} rows covered · ${answers.map((l) => l.dispatch_status.replace(/_/g, ' ')).join(', ')}`,
-          telephony_provider: 'ozonetel', tools_called: ['submit_call_outputs'], total_tokens: turns.length * 14000, turn_shape: 'au', variant: 'full',
-          recording_source: 'ozonetel', recording_url: '', disconnect_reason: last.provider.HangupBy, campaign_name: camp.name, context, events, outputs, call_result: 'conversation' });
-        last.stream.agent_finished = true;
-        reOutcome(last);
-        Object.assign(row, { status: 'completed', call_result: 'conversation', call_id: id, recording_call_id: id, captured_at: calls[calls.length - 1].ended_at, outputs });
-      } else {
-        const m = last.mapped;
-        Object.assign(row, { status: c.final.status, reason: m.reason, call_result: null });
-        if (c.final.status === 'retry_exhausted') Object.assign(row, { last_attempt_status: m.status, last_attempt_reason: m.reason });
-        if (c.final.status === 'retry_scheduled') row.next_attempt_at = new Date(Date.now() + c.final.next_attempt_in_min * 60000).toISOString();
-      }
-      camp.contacts.push(row);
-    });
+  const po = (i, n) => `45000${String(1000 + i * 20 + n).padStart(5, '0')}/${(n + 1) * 10}`;
+  return groupedCampaign(now, {
+    id: `pi-packaging-follow-up-${uuid}`, name: 'PI packaging follow up - week 40', agent: 'pi_packaging_followup', org_id: 'org_pi', source: 'internal', description: 'Pilot batch 1',
+    contacts: SUPPLIERS, phonePrefix: '90000002', did: PI_ROUTE.did, callPrefix: '40715920', statusKey: 'dispatch_status', dateKeys: ['lots', 'ready_date', 'estimate_date', 'dispatch_date'],
+    rowValues: (i, n, item, qty, created) => ({ po_number: po(i, n), item, pending_qty: String(qty), due_date: day(created, n - 1).split('-').reverse().join('/') }),
+    callValues: (s, i, phone) => ({ supplier_code: s.code, supplier_name: s.name, contact_person: 'Test Contact', phone_number: phone, plant: `Plant ${1 + (i % 2)}` }),
+    callAnswers: (answers, covered) => ({ call_result: 'completed', rows: answers, rows_covered: covered, next_followup_date: answers.map((l) => l.estimate_date).filter(Boolean).sort()[0] || '',
+      escalate_to: answers.some((l) => /quality|disputed/.test(l.dispatch_status)) ? 'quality' : answers.some((l) => l.dispatch_status === 'artwork_hold') ? 'buyer' : 'none',
+      supplier_verbatim: answers.find((l) => l.supplier_says)?.supplier_says || '' }),
+    say: (s, items) => [`Namaste, main Hetal, PI Industries packaging procurement se. Kya meri baat ${s.name} se ho rahi hai?`, `Aapke ${items.length} open rows hain. Pehla: ${items[0].values.item}, pending ${items[0].values.pending_qty}. Dispatch plan kya hai?`],
   });
-  return { campaign: camp, calls };
 }

@@ -32,7 +32,10 @@ const move = (list: any[], from: number, to: number) => {
 
 interface Settings { label: string; description: string; voice: string; ozonetel_campaign: string; primary_id_key: string; }
 /** How rows of a file become calls (PRD-ECHO-19 section 4). */
-interface InputPlan { mode: 'row' | 'group'; group_by: string; call_columns: string[]; row_columns: string[]; order_by: string; order_dir: 'asc' | 'desc'; max_rows: number; overflow: 'split' | 'cap'; answers_key: string; }
+interface SkipRule { column: string; op: string; value: string }
+interface InputPlan { mode: 'row' | 'group'; group_by: string; call_columns: string[]; row_columns: string[]; order_by: string; order_dir: 'asc' | 'desc'; max_rows: number; overflow: 'split' | 'cap'; answers_key: string;
+  /** How a row is said out loud, with {column} names. */ say_as?: string; max_minutes?: number; /** Columns that make a row the same row on the next upload. */ identity?: string[]; remember?: boolean;
+  list_style?: 'one_by_one' | 'all_first'; check_in_after?: number; skip?: SkipRule[]; }
 interface Engine { preset: string; mode: 's2s' | 'pipeline'; s2s: string; stt: string; llm: string; tts: string; fallback?: string; fallback_after_ms?: number; turn?: any; stt_fallback?: string; tts_fallback?: string; realtime_alt?: string; turn_detector?: string; voice?: string; }
 interface Rules { retry: { tries: number; gap_minutes: number; on: string[]; answer_field: string; answer_values: string[] }; sync_target: { type: string; url: string }; lookups: any[]; engine: Engine; }
 const blankPlan = (): InputPlan => ({ mode: 'row', group_by: '', call_columns: [], row_columns: [], order_by: '', order_dir: 'asc', max_rows: 8, overflow: 'split', answers_key: '' });
@@ -113,6 +116,16 @@ export class AgentDetailComponent implements OnInit, OnDestroy {
   rowCols = computed(() => this.inputKeys().filter((k) => this.roleOf(k) === 'row'));
   phoneKey = computed(() => this.inputs().find((v) => v.type === 'phone')?.key || '');
   listOutputs = computed(() => this.outputs().filter((v) => v.type === 'list'));
+  /** A row as the agent will say it, from the sample values of its columns. */
+  sayPreview = computed(() => {
+    const p = this.plan(); const sample = (k: string) => String(this.inputs().find((v: any) => v.key === k)?.sample ?? k);
+    const cols = (p.row_columns || []).filter((k) => k !== p.group_by);
+    return p.say_as ? p.say_as.replace(/\{(\w+)\}/g, (_: string, k: string) => sample(k)) : cols.slice(0, 2).map(sample).join(', ');
+  });
+  toggleIdentity(k: string): void { const cur = this.plan().identity || []; this.patchPlan({ identity: cur.includes(k) ? cur.filter((x) => x !== k) : [...cur, k] }); }
+  addSkip(): void { this.patchPlan({ skip: [...(this.plan().skip || []), { column: this.rowCols()[0] || '', op: 'is', value: '' }] }); }
+  setSkip(i: number, c: Partial<SkipRule>): void { this.patchPlan({ skip: (this.plan().skip || []).map((r, n) => (n === i ? { ...r, ...c } : r)) }); }
+  dropSkip(i: number): void { this.patchPlan({ skip: (this.plan().skip || []).filter((_, n) => n !== i) }); }
   rowAnswers = computed(() => this.outputs().find((v) => v.key === this.plan().answers_key && v.type === 'list') || this.listOutputs()[0] || null);
   answerOptions = computed(() => this.outputs().find((v) => v.key === this.rules().retry.answer_field)?.options || []);
   /** Where each column goes on a grouped call: once for the whole call, or read out per row. */

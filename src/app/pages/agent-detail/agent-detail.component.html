@@ -260,6 +260,52 @@
                       <span>Cover only the first rows; mark the rest as not covered <app-guide topic="max_cap"></app-guide></span></label>
                   </div>
 
+                  <div class="setup-grid">
+                    <label class="field">
+                      <span class="setup-q">How a row is said <app-hint text="What the agent says to name a row, built from its columns. Write column names in curly brackets. Echo runs the list: it says how many rows the call is about, takes them in order, reads each answer back and saves that row before the next one."></app-hint></span>
+                      <input class="input" [ngModel]="plan().say_as || ''" (ngModelChange)="patchPlan({ say_as: $event })" placeholder="{item}, {pending_qty} pending" />
+                      <span class="row-sub">Sounds like: "{{ sayPreview() || 'the first two row columns' }}"</span>
+                    </label>
+                    <label class="field">
+                      <span class="setup-q">Longest call, in minutes <app-hint text="The agent stops the list when this time is up, says so, and the rows left over follow the rule above. Rows already answered are kept."></app-hint></span>
+                      <input class="input" type="number" min="2" max="30" [ngModel]="plan().max_minutes || 10" (ngModelChange)="patchPlan({ max_minutes: +$event || 10 })" />
+                    </label>
+                  </div>
+
+                  <details class="adv">
+                    <summary><app-icon name="rows" [size]="14"></app-icon> Long lists and repeat uploads <span class="adv-hint">{{ plan().remember ? 'remembers rows' : 'no memory' }} · {{ plan().list_style === 'all_first' ? 'asks one answer for all first' : 'one by one' }}</span></summary>
+                    <div class="adv-body">
+                      <div>
+                        <div class="setup-q">Going through the list</div>
+                        <label class="choice"><input type="radio" name="liststyle" [checked]="plan().list_style !== 'all_first'" (change)="patchPlan({ list_style: 'one_by_one' })" /><span>One row at a time</span></label>
+                        <label class="choice"><input type="radio" name="liststyle" [checked]="plan().list_style === 'all_first'" (change)="patchPlan({ list_style: 'all_first' })" /><span>First ask if one answer fits every row, then take the exceptions <app-hint text="When the contact says the same answer applies to all rows, it is saved on each row and marked as said for several rows."></app-hint></span></label>
+                      </div>
+                      <label class="field">
+                        <span class="setup-q">Check in after this many rows <app-hint text="The agent says how many rows are left and asks to go on now or later. Later books a call back for the open rows only."></app-hint></span>
+                        <input class="input" type="number" min="2" max="20" [ngModel]="plan().check_in_after || 5" (ngModelChange)="patchPlan({ check_in_after: +$event || 5 })" />
+                      </label>
+                      <div>
+                        <div class="setup-q">A row is the same row on the next upload when these match <app-hint text="Pick the columns that make a row unique. Echo then remembers what was said about it, gives the agent the last answer, and does not call again about a row that is settled."></app-hint></div>
+                        <div class="seg">
+                          @for (k of rowCols(); track k) { <button type="button" [class.on]="(plan().identity || []).includes(k)" (click)="toggleIdentity(k)">{{ k }}</button> }
+                        </div>
+                        <label class="choice"><input type="checkbox" [checked]="!!plan().remember" [disabled]="!(plan().identity || []).length" (change)="patchPlan({ remember: !plan().remember })" /><span>Remember answers between uploads and skip rows that are settled</span></label>
+                      </div>
+                      <div>
+                        <div class="setup-q">Skip a row when <app-hint text="Rows that do not need a call. A skipped row is on no call and stays in the results with the reason."></app-hint></div>
+                        @for (r of plan().skip || []; track $index) {
+                          <div class="skip-rule">
+                            <select class="select" [ngModel]="r.column" (ngModelChange)="setSkip($index, { column: $event })">@for (k of rowCols(); track k) { <option [value]="k">{{ k }}</option> }</select>
+                            <select class="select" [ngModel]="r.op" (ngModelChange)="setSkip($index, { op: $event })"><option value="is">is</option><option value="is_not">is not</option><option value="is_empty">is empty</option><option value="before">is before</option><option value="after">is after</option></select>
+                            @if (r.op !== 'is_empty') { <input class="input" [ngModel]="r.value" (ngModelChange)="setSkip($index, { value: $event })" placeholder="value" /> }
+                            <button class="icon-btn" (click)="dropSkip($index)" aria-label="Remove this rule"><app-icon name="close" [size]="14"></app-icon></button>
+                          </div>
+                        }
+                        <button class="btn btn-sm" (click)="addSkip()">Add a rule</button>
+                      </div>
+                    </div>
+                  </details>
+
                   <div>
                     <div class="setup-q">What to find out for each row <app-guide topic="row_answers"></app-guide></div>
                     @if (rowAnswers(); as ra) {

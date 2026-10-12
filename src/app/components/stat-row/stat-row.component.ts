@@ -19,8 +19,8 @@ interface Tile { key: string; label: string; help: string; count: number; sub: s
       @if (total()) {
         <div class="sr-head">
           <span class="card-title">Result</span>
-          <app-hint text="Every contact ends in one of four results. Successful: the call completed and its answers were saved. Needs action: a person has to do something; open it to see what. In progress: calling is still trying, or a call back is due. Closed: nothing more will happen. When an agent has its own goal, that goal decides what successful means."></app-hint>
-          <span style="flex: 1"></span><span class="row-sub">{{ total() }} contacts</span>
+          <app-hint text="Every contact, or every row when several rows share a call, ends in one of four results. Successful: the call completed and its answers were saved. Needs action: a person has to do something; open it to see what. In progress: calling is still trying, or a call back is due. Closed: nothing more will happen. When an agent has its own goal, that goal decides what successful means."></app-hint>
+          <span style="flex: 1"></span><span class="row-sub">{{ total() }} {{ unit() }}</span>
         </div>
         <div class="sr-bar" role="group" aria-label="Result">
           @for (s of segments(); track s.key) {
@@ -81,6 +81,8 @@ export class StatRowComponent {
   private router = inject(Router);
   stats = input<any>(null);
   result = input<any>(null);
+  /** What a result is counted in: contacts, or rows when several rows share a call. */
+  unit = input<string>('contacts');
   /** Query that scopes the rows: days, agent, campaign_id. */
   scope = input<Record<string, string>>({});
   list = signal<{ key: string; label: string; help: string; total?: number; rows?: any[] } | null>(null);

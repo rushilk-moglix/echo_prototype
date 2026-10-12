@@ -302,6 +302,10 @@ export class ApiService {
   campaignContacts(id: string): Promise<any> {
     return this.getJSON(ENDPOINTS.campaigns.contacts(id));
   }
+  /** Every uploaded row of a campaign with its own state: the unit of work when several rows share a call. */
+  campaignRows(id: string): Promise<any> {
+    return this.getJSON(ENDPOINTS.campaigns.rows(id));
+  }
   campaignResponses(id: string): Promise<any> {
     return this.getJSON(ENDPOINTS.campaigns.responses(id));
   }

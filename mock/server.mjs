@@ -10,6 +10,7 @@ import { readFileSync } from 'node:fs';
 import { randomUUID, randomInt } from 'node:crypto';
 import { writeXlsx, readXlsx, zip } from './xlsx.mjs';
 import { PI_ORG, PI_ROUTE, PI_USERS, piAgent, piCampaign } from './pi-seed.mjs';
+import { trackerAgent, trackerCampaign } from './rows-seed.mjs';
 import { simulate, record, reOutcome, planAttempts, rowTiming, RETRY } from './ozonetel.mjs';
 import { INTEGRATION_CATALOG } from './integrations.mjs';
 import { OUTCOMES, DEFAULT_RETRY, retryAgain, contactOutcome, setNoReplyUnder, noAnswers } from './outcome.mjs';
@@ -79,6 +80,12 @@ for (const x of [...S.agents, ...S.campaigns, ...S.calls]) x.org_id ||= 'org_mog
   const pi = piCampaign(new Date().toISOString(), randomUUID().slice(0, 8));
   S.agents.push(piAgent(new Date(Date.now() - 2 * 86400000).toISOString()));
   S.campaigns.push(pi.campaign); S.calls.push(...pi.calls);
+}
+// A team sheet sent through Clarix whose rows share calls: the same rows, calls and answers the Clarix mock shows.
+{
+  const t = trackerCampaign(new Date().toISOString());
+  S.agents.push(trackerAgent(new Date(Date.now() - 2 * 86400000).toISOString()));
+  S.campaigns.push(t.campaign); S.calls.push(...t.calls);
 }
 // Target backend fields: who changed an agent last and when it last reached Clarix.
 for (const a of agents) {
@@ -298,6 +305,7 @@ function campaignSummary(c) {
   return {
     campaign_id: c.campaign_id, name: c.name, agent: c.agent, provider: c.provider, source: c.source, archived_at: c.archived_at || null,
     description: c.description, created_at: c.created_at, status: campaignStatus(c),
+    rows_answered: planOf(a).mode === 'group' ? c.contacts.reduce((n, x) => n + rowStates(c, x).filter((r) => r.state === 'answered').length, 0) : null,
     contacts_count: c.contacts.length, file_rows: c.file_rows || c.contacts.reduce((n, x) => n + (x.items?.length || 1), 0),
     by_group: c.contacts.reduce((m, x) => { const k = OUTCOMES[contactOutcome(x)]?.group || 'failed'; m[k] = (m[k] || 0) + 1; return m; }, {}),
     ...runTime(c),
@@ -335,6 +343,40 @@ const summarise = (outputs, turns, userTurns) => {
   if (!userTurns) return `Agent spoke, caller never did (${turns} turn${turns === 1 ? '' : 's'})`;
   return `Ended without a reported outcome (${turns} turns)`;
 };
+
+// ── Rows: the unit of work. The call has a status; every uploaded row has a state. ──
+const ROW_STATES = { rejected: 'Rejected', skipped: 'Skipped', waiting: 'Waiting', answered: 'Answered', partly: 'Partly answered', not_covered: 'Not covered', not_reached: 'Not reached' };
+/** How a row is said out loud: the agent's own pattern, or its first two row columns. */
+const sayRow = (a, values) => {
+  const pattern = planOf(a).say_as;
+  if (pattern) return pattern.replace(/\{(\w+)\}/g, (_, k) => values?.[k] ?? '').trim();
+  return rowColumns(a).slice(0, 2).map((k) => values?.[k]).filter(Boolean).join(', ');
+};
+/**
+ * One entry per uploaded row of a contact. A row is answered when its answers were saved, which happens during the call,
+ * row by row; rows a call did not get to are not covered; rows of a contact nobody reached are not reached.
+ */
+function rowStates(c, x) {
+  const a = agentByKey(c.agent); const o = contactOutcome(x); const g = OUTCOMES[o]?.group;
+  const talked = (x.attempts_detail || []).some((t) => t.stream?.connected) || HAS_CALL.has(x.status);
+  const open = () => (g === 'not_dialled' ? (o === 'bad_data' ? 'rejected' : 'skipped') : talked && g !== 'not_reached' ? 'not_covered' : g === 'in_progress' ? 'waiting' : 'not_reached');
+  const base = (it) => ({ campaign_id: c.campaign_id, primary_id: x.primary_id, contact: x.name, phone: x.phone, row: it.row ?? x.row ?? 0, n: it.n ?? 1, of: x.items?.length || 1,
+    say: it.values ? sayRow(a, it.values) : '', values: it.values || {}, call_label: (x.parts || 1) > 1 ? `call ${x.part} of ${x.parts}` : '', call_status: OUTCOMES[o]?.label || '', outcome: o, last: it.last || null,
+    next_at: x.status === 'retry_scheduled' ? x.next_attempt_at || null : null });
+  if (!x.items?.length) return [{ ...base({}), state: hasOutputs(x) ? 'answered' : open(), answer: hasOutputs(x) ? x.outputs : null, saved_second: null }];
+  const dur = calls.find((k) => k.call_id === x.call_id)?.duration_seconds || 0;
+  return rowsOf(a, x).map((it) => {
+    const got = it.answer && !Object.values(it.answer).includes('not_covered') && Object.keys(it.answer).some((k) => k !== 'row' && it.answer[k] !== '' && it.answer[k] != null) ? it.answer : null;
+    return { ...base(it), state: got ? 'answered' : open(), answer: got, saved_second: got && dur ? Math.round(dur * (0.2 + (0.7 * it.n) / (x.items.length + 0.5))) : null };
+  });
+}
+/** Every uploaded row of a campaign in file order, with the rows that were skipped before any call. */
+function campaignRows(c) {
+  const a = agentByKey(c.agent);
+  const skipped = (c.skipped_rows || []).map((s) => ({ campaign_id: c.campaign_id, primary_id: null, contact: s.contact || '', phone: '', row: s.row, n: 0, of: 0, say: sayRow(a, s.values), values: s.values,
+    call_label: '', call_status: '', outcome: '', last: null, next_at: null, state: 'skipped', reason: s.reason, answer: null, saved_second: null }));
+  return [...c.contacts.flatMap((x) => rowStates(c, x)), ...skipped].sort((p, q) => p.row - q.row).map((r) => ({ ...r, state_label: ROW_STATES[r.state] }));
+}
 
 /** One line in words for the call log: the agent's own note when it wrote one, otherwise what was saved or why nothing was. Never raw field names. */
 function plainSummary(c) {
@@ -1225,7 +1267,13 @@ on('DELETE', '/api/campaigns/:id', ({ res, p }) => { const c = campaignById(p.id
 on('POST', '/api/campaigns/:id/restore', ({ res, p }) => { const c = campaignById(p.id); if (!c) return fail(res, 404, 'Campaign not found'); delete c.archived_at; json(res, 200, campaignSummary(c)); });
 on('GET', '/api/campaigns/:id/contacts', ({ res, p }) => {
   const c = campaignById(p.id); if (!c) return fail(res, 404, 'Campaign not found');
-  json(res, 200, { contacts: c.contacts.map((x) => ({ primary_id: x.primary_id, phone: x.phone, name: x.name, no_answers: noAnswers(x), answers_source: x.answers_source || null, status: x.status, outcome: contactOutcome(x), outcome_group: OUTCOMES[contactOutcome(x)]?.group, rows_count: x.items?.length || 1, last_provider: (() => { const l = (x.attempts_detail || []).slice(-1)[0]; return l ? { name: l.provider_name || 'ozonetel', Status: l.provider.Status, CustomerStatus: l.provider.CustomerStatus, DialStatus: l.provider.DialStatus, HangupBy: l.provider.HangupBy } : null; })(), part: x.part || 1, parts: x.parts || 1, call_id: x.call_id || null, call_result: x.call_result || null, reason: x.reason || null, attempts: x.attempts ?? null, next_attempt_at: x.next_attempt_at || null, validation_error: x.validation_error || null, recording_call_id: x.recording_call_id || null, last_attempt_status: x.last_attempt_status || null, last_attempt_reason: x.last_attempt_reason || null, ...rowTiming(x.attempts_detail || []), attempts: (x.attempts_detail || []).length || x.attempts || 0, anomalies: [...new Set((x.attempts_detail || []).flatMap((a) => a.mapped.anomalies))] })) });
+  json(res, 200, { contacts: c.contacts.map((x) => ({ primary_id: x.primary_id, phone: x.phone, name: x.name, rows_answered: x.items?.length ? rowStates(c, x).filter((r) => r.state === 'answered').length : null, no_answers: noAnswers(x), answers_source: x.answers_source || null, status: x.status, outcome: contactOutcome(x), outcome_group: OUTCOMES[contactOutcome(x)]?.group, rows_count: x.items?.length || 1, last_provider: (() => { const l = (x.attempts_detail || []).slice(-1)[0]; return l ? { name: l.provider_name || 'ozonetel', Status: l.provider.Status, CustomerStatus: l.provider.CustomerStatus, DialStatus: l.provider.DialStatus, HangupBy: l.provider.HangupBy } : null; })(), part: x.part || 1, parts: x.parts || 1, call_id: x.call_id || null, call_result: x.call_result || null, reason: x.reason || null, attempts: x.attempts ?? null, next_attempt_at: x.next_attempt_at || null, validation_error: x.validation_error || null, recording_call_id: x.recording_call_id || null, last_attempt_status: x.last_attempt_status || null, last_attempt_reason: x.last_attempt_reason || null, ...rowTiming(x.attempts_detail || []), attempts: (x.attempts_detail || []).length || x.attempts || 0, anomalies: [...new Set((x.attempts_detail || []).flatMap((a) => a.mapped.anomalies))] })) });
+});
+on('GET', '/api/campaigns/:id/rows', ({ res, p }) => {
+  const c = campaignById(p.id); if (!c) return fail(res, 404, 'Campaign not found');
+  const a = agentByKey(c.agent); const rows = campaignRows(c);
+  json(res, 200, { rows, counts: rows.reduce((m, r) => { m[r.state] = (m[r.state] || 0) + 1; return m; }, {}), states: ROW_STATES, grouped: planOf(a).mode === 'group',
+    row_columns: rowColumns(a), answer_fields: answerFields(a).filter((k) => k !== 'row'), contacts: c.contacts.length });
 });
 on('GET', '/api/campaigns/:id/responses', ({ res, p }) => {
   const c = campaignById(p.id); if (!c) return fail(res, 404, 'Campaign not found');
@@ -1244,7 +1292,7 @@ on('GET', '/api/campaigns/:id/contacts/:pid', ({ res, p }) => {
     campaign: { campaign_id: c.campaign_id, name: c.name, agent: c.agent, agent_label: ag?.label || c.agent },
     prev: at > 0 ? order[at - 1] : null, next: at < order.length - 1 ? order[at + 1] : null, position: at + 1, total: order.length,
     outcome: contactOutcome(x), outcome_group: OUTCOMES[contactOutcome(x)]?.group, no_answers: noAnswers(x), answers_source: x.answers_source || null, context: x.context || {},
-    rows: x.items?.length ? rowsOf(ag, x).map((it) => ({ n: it.n, row: it.row, values: it.values, answer: it.answer })) : null,
+    rows: x.items?.length ? rowStates(c, x).map((r) => ({ n: r.n, row: r.row, values: r.values, answer: r.answer, state: r.state, state_label: ROW_STATES[r.state], saved_second: r.saved_second, say: r.say, last: r.last })) : null,
     row_columns: x.items?.length ? rowColumns(ag) : [], answer_fields: answerFields(ag), part: x.part || 1, parts: x.parts || 1, call_id: x.call_id || null,
     contact: { name: x.name, phone: x.phone }, status: x.status, call_result: x.call_result || null, reason: x.reason || null, attempts: (x.attempts_detail || []).length || x.attempts || 0,
     next_attempt_at: x.next_attempt_at || null, last_attempt_status: x.last_attempt_status || null, last_attempt_reason: x.last_attempt_reason || null,
@@ -1318,6 +1366,7 @@ function fileWithAnswers(c) {
   const out = [];
   for (const x of c.contacts) {
     const t = rowTiming(x.attempts_detail || []);
+    const states = Object.fromEntries(rowStates(c, x).map((r) => [r.row, ROW_STATES[r.state]]));
     const base = { call_status: OUTCOMES[contactOutcome(x)]?.label || '', no_answers_reason: noAnswers(x)?.label || '', answers_from: x.answers_source === 'transcript' ? 'transcript' : hasOutputs(x) ? 'call' : '', dials: t.attempts || 0, talk_seconds: t.talk_seconds || 0, call_id: x.call_id || '' };
     const items = x.items?.length ? rowsOf(a, x) : [{ row: x.row, values: {}, answer: null }];
     // A reached call that ended before the agent covered a row (caller hung up early): the row says not covered, never blank.
@@ -1327,12 +1376,13 @@ function fileWithAnswers(c) {
       const rowAnswer = it.answer && Object.keys(it.answer).length ? it.answer : x.items?.length && reached ? notCovered : it.answer;
       // Agent answers that share a name with a platform column are prefixed, so the platform call status always wins.
       const answers = Object.fromEntries([...flat(callOutputs(a, x.outputs)), ...Object.entries(rowAnswer || {})].map(([k, v]) => [PLATFORM_COLS.has(k) ? `answer_${k}` : k, v]));
-      out.push({ _row: it.row, ...x.context, ...it.values, ...answers, ...base });
+      out.push({ _row: it.row, ...x.context, ...it.values, ...answers, ...base, row_state: states[it.row] || states[x.row] || Object.values(states)[0] || '' });
     }
   }
+  for (const s of c.skipped_rows || []) out.push({ _row: s.row, ...s.values, row_state: 'Skipped', call_status: '', no_answers_reason: s.reason, answers_from: '', dials: 0, talk_seconds: 0, call_id: '' });
   out.sort((p, q) => p._row - q._row);
   const ren = (k) => (PLATFORM_COLS.has(k) ? `answer_${k}` : k);
-  const head = [...inputs, 'call_status', 'no_answers_reason', 'answers_from', 'dials', 'talk_seconds', ...[...new Set([...callKeys, ...ansKeys].map(ren))], 'call_id'];
+  const head = [...inputs, 'row_state', 'call_status', 'no_answers_reason', 'answers_from', 'dials', 'talk_seconds', ...[...new Set([...callKeys, ...ansKeys].map(ren))], 'call_id'];
   return { head, rows: out };
 }
 on('GET', '/api/campaigns/:id/results.xlsx', ({ res, p }) => {
@@ -1411,7 +1461,7 @@ on('GET', '/webrtc/recording/:sid', ({ res, p, q }) => file(res, wav(callById(p.
 // ── Server ───────────────────────────────────────────────────────────────────
 // Runs wherever the mock runs (node, the demo's service worker, the single file): seeded calls get their transcript read once.
 fillFromTranscripts();
-registerReports({ on, json, file, fail, campaigns, agents, agentByKey, users, orgOf, nowIso,
+registerReports({ on, json, file, fail, campaigns, agents, agentByKey, users, orgOf, nowIso, rowStates, skippedRows: (c) => (c.skipped_rows || []).map((s) => ({ ...s, say: sayRow(agentByKey(c.agent), s.values) })),
   isDialled: (c, r) => !(r.status === 'input_validation_failed' || r.reason === 'data_validation_failed' || r.reason === 'duplicate_row' || !agentByKey(c.agent)?.ozonetel_campaign) && !!(r.attempts_detail?.length || ATTEMPTED.has(r.status)),
   isReached: (r) => (r.attempts_detail || []).some((a) => a.stream?.connected || a.mapped?.result === 'technical_drop') || HAS_CALL.has(r.status),
   // Call again from Follow ups: the contact goes back to the agent as a fresh dial.

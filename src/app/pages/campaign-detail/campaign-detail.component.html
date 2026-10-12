@@ -71,7 +71,7 @@
     @if (contacts().length) {
       <div class="card progress-card">
         <div class="progress-top">
-          <div><b>{{ doneCount() }}</b><span class="row-sub">&nbsp;of {{ contacts().length }} calls finished{{ grouped() ? ' · ' + (campaign().file_rows || 0) + ' file rows' : '' }}</span></div>
+          <div><b>{{ doneCount() }}</b><span class="row-sub">&nbsp;of {{ contacts().length }} calls finished{{ grouped() ? ' · ' + rowsAnswered() + ' of ' + (rowData()?.rows?.length || campaign().file_rows || 0) + ' rows answered' : '' }}</span></div>
           <app-guide topic="outcomes"></app-guide>
           <div class="progress-facts" style="margin-left: auto">
             <span>Dials <b>{{ dials() }}</b><app-hint text="Every dial placed, retries included."></app-hint></span>
@@ -86,18 +86,58 @@
     }
 
     @if (stats()?.stats && contacts().length) {
-      <app-stat-row [stats]="stats().stats" [result]="stats().result" [scope]="statScope()"></app-stat-row>
+      <app-stat-row [stats]="stats().stats" [result]="stats().result" [unit]="stats().result_unit || 'contacts'" [scope]="statScope()"></app-stat-row>
     }
 
     <div class="card">
       <div class="card-head">
         <span class="card-title">
+          @if (rowData()?.grouped) { <button [class]="'tab' + (tab() === 'rows' ? ' on' : '')" (click)="tab.set('rows')">Rows</button> }
           <button [class]="'tab' + (tab() === 'contacts' ? ' on' : '')" (click)="tab.set('contacts')">Calls</button>
           @if (hasResults()) { <button [class]="'tab' + (tab() === 'responses' ? ' on' : '')" (click)="tab.set('responses')">Answers</button> }
         </span>
-        <span class="pill">{{ tab() === 'responses' ? shownResponses().length : shownContacts().length }} shown</span>
+        <span class="pill">{{ tab() === 'rows' ? shownRows().length : tab() === 'responses' ? shownResponses().length : shownContacts().length }} shown</span>
       </div>
-      @if (contacts().length) {
+      @if (tab() === 'rows' && rowData(); as d) {
+        <!-- The row is the unit of work: one chip per row state, with counts. They add up to the rows of the file. -->
+        <div class="status-bar" role="group" aria-label="Filter by row state">
+          <button type="button" [class]="'st-chip' + (!rowState() ? ' on' : '')" (click)="rowState.set('')"><b>{{ d.rows.length }}</b> All rows</button>
+          @for (s of rowStates(); track s.key) {
+            <button type="button" [class]="'st-chip rw-' + s.key + (rowState() === s.key ? ' on' : '')" (click)="rowState.set(rowState() === s.key ? '' : s.key)"><i></i><b>{{ s.count }}</b> {{ s.label }}</button>
+          }
+          <span style="flex: 1"></span>
+          <span class="row-sub">{{ d.rows.length }} rows · {{ d.contacts }} calls <app-hint text="A call has a status. A row has a state. Answered: its answers were saved, row by row, during the call. Not covered: the call ended before this row; only these are asked on the next try. Not reached: nobody picked up. Waiting: its call has not happened. Skipped: settled on the last upload or matched a skip rule. Rejected: failed an input check."></app-hint></span>
+        </div>
+        <div class="filter-bar">
+          <label class="search"><app-icon name="search" [size]="14"></app-icon><input class="input" [ngModel]="q()" (ngModelChange)="q.set($event)" placeholder="Search a row, contact or number" aria-label="Search rows" /></label>
+        </div>
+        <div class="scroll-x">
+          <table class="table rw-table">
+            <thead><tr><th>Row</th><th>What it is about</th><th>Row state</th><th>Answers</th><th>Contact</th><th>Call status</th><th></th></tr></thead>
+            <tbody>
+              @for (r of shownRows(); track r.row) {
+                <tr [class]="r.primary_id ? 'ct-row' : ''" [attr.tabindex]="r.primary_id ? 0 : null" [routerLink]="r.primary_id ? ['/campaigns', id, 'contacts', r.primary_id] : null" [title]="r.primary_id ? 'Open the call for ' + r.contact : 'This row was not put on a call'">
+                  <td class="mono">{{ r.row }}</td>
+                  <td>
+                    <div class="ct-name">{{ r.say || '—' }}</div>
+                    @if (r.last) { <div class="row-sub">Last time: {{ r.last }}</div> }
+                  </td>
+                  <td class="nowrap"><span [class]="'tag ' + rowTone(r.state)">{{ r.state_label }}</span>
+                    @if (r.state === 'answered' && r.saved_second !== null) { <div class="row-sub mono" title="Each row is saved as soon as it is answered, so a call that ends early keeps it.">saved at {{ mmss(r.saved_second) }}</div> }
+                    @if (r.state === 'not_covered' && r.next_at) { <div class="row-sub">asked on the next try</div> }
+                    @if (r.reason) { <div class="row-sub">{{ r.reason }}</div> }
+                  </td>
+                  <td>{{ rowAnswer(r) || '—' }}</td>
+                  <td><div>{{ r.contact }}</div><div class="row-sub mono">{{ r.phone }}@if (r.call_label) { · {{ r.call_label }} }@if (r.of > 1) { · row {{ r.n }} of {{ r.of }} }</div></td>
+                  <td class="nowrap">{{ r.call_status || '—' }}</td>
+                  <td>@if (r.primary_id) { <app-icon name="chevronRight" [size]="14"></app-icon> }</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+      @if (contacts().length && tab() !== 'rows') {
         <!-- Call status drives everything: one chip per status present, with counts. -->
         <div class="status-bar" role="group" aria-label="Filter by call status">
           <button type="button" [class]="'st-chip' + (!outcomeFilter() ? ' on' : '')" (click)="outcomeFilter.set('')"><b>{{ contacts().length }}</b> All</button>
@@ -112,7 +152,8 @@
           @if (filtersOn()) { <button class="btn btn-sm" (click)="clearFilters()"><app-icon name="close" [size]="12"></app-icon> Clear filters</button> }
         </div>
       }
-      @if (tab() === 'responses' && hasResults()) {
+      @if (tab() === 'rows') {
+      } @else if (tab() === 'responses' && hasResults()) {
         <app-responses-table [rows]="shownResponses()" [outVars]="outVars()" [idLabel]="idLabel()" [campaignId]="id"></app-responses-table>
       } @else {
         <app-contacts-browser [rows]="shownContacts()" [campaignId]="id" [grouped]="grouped()" [filtered]="filtersOn()"></app-contacts-browser>

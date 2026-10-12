@@ -32,7 +32,17 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   stats = signal<any>(null);
   statScope = signal<Record<string, string>>({});
   campaign = signal<any>(null);
-  tab = signal<'responses' | 'contacts'>('contacts');
+  tab = signal<'responses' | 'contacts' | 'rows'>('contacts');
+  /** Every uploaded row with its own state. A call that went well can still leave a row open, so rows are listed on their own. */
+  rowData = signal<any>(null);
+  rowState = signal('');
+  rowStates = computed(() => { const d = this.rowData(); return d ? Object.keys(d.states).filter((k) => d.counts[k]).map((k) => ({ key: k, label: d.states[k], count: d.counts[k] })) : []; });
+  shownRows = computed(() => { const term = this.q().trim().toLowerCase(); return (this.rowData()?.rows || []).filter((r: any) => (!this.rowState() || r.state === this.rowState()) && (!term || [r.say, r.contact, r.phone, ...Object.values(r.values || {})].some((v) => String(v || '').toLowerCase().includes(term)))); });
+  rowsAnswered = computed(() => this.rowData()?.counts?.answered || 0);
+  rowTone(state: string): string { return state === 'answered' ? 'ok' : state === 'rejected' ? 'bad' : state === 'not_covered' || state === 'partly' ? 'warn' : state === 'waiting' ? 'busy' : 'muted'; }
+  rowAnswer(r: any): string { const a = r.answer || {}; const f = (this.rowData()?.answer_fields || []).filter((k: string) => a[k] !== '' && a[k] != null).slice(0, 3); return f.map((k: string) => String(a[k]).replace(/_/g, ' ')).join(' · '); }
+  mmss(s: number): string { return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
+  private rowsOpened = false;
   fmtSecs = fmtSecs;
   hover = statusHover;
   /** Long durations as "2 h 35 min"; short ones as m:ss. */
@@ -150,6 +160,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       const c = await this.api.campaign(this.id);
       this.campaign.set(c);
       const [ct, rs] = await Promise.all([this.api.campaignContacts(this.id), this.api.campaignResponses(this.id)]);
+      this.api.campaignRows(this.id).then((d) => { this.rowData.set(d); if (d.grouped && !this.rowsOpened) { this.rowsOpened = true; this.tab.set('rows'); } }).catch(() => {});
       this.statScope.set({ days: '3650', campaign_id: this.id });
       this.api.reportSummary({ days: '3650', campaign_id: this.id }).then((r) => this.stats.set(r)).catch(() => {});
       this.contacts.set(ct.contacts || []);

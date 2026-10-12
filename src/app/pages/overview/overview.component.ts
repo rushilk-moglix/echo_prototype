@@ -75,7 +75,7 @@ import { AuthService } from '../../services/auth.service';
       </div>
 
       @if (report()?.stats) {
-        <app-stat-row [stats]="report().stats" [result]="report().result" [scope]="rowScope()"></app-stat-row>
+        <app-stat-row [stats]="report().stats" [result]="report().result" [unit]="report().result_unit || 'contacts'" [scope]="rowScope()"></app-stat-row>
       }
 
       <div class="card ov-mix">

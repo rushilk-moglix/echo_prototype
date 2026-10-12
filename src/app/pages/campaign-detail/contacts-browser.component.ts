@@ -41,7 +41,7 @@ import { HintComponent } from '../../components/hint/hint.component';
                   <div class="ct-name">{{ r.name || '—' }}</div>
                   <div class="row-sub mono">{{ r.phone }}@if (r.parts > 1) { · call {{ r.part }} of {{ r.parts }} }</div>
                 </td>
-                @if (grouped) { <td class="mono">{{ r.rows_count }}</td> }
+                @if (grouped) { <td class="mono" [title]="'Rows answered on this call, of the rows it was about'">{{ r.rows_answered ?? 0 }} of {{ r.rows_count }}</td> }
                 <td class="nowrap">
                   <span [class]="'tag ct-status ' + ov(r).cls">{{ ov(r).label }}</span>
                   <span (click)="$event.stopPropagation()"><app-hint [text]="why(r)"></app-hint></span>

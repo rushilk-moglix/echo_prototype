@@ -101,7 +101,7 @@ export function whyOf(outcome, seed, callbackAsked) {
 }
 const fieldType = (t) => (/number|integer|decimal/i.test(t) ? 'number' : /date/i.test(t) ? 'date' : /phone/i.test(t) ? 'phone' : /enum|choice/i.test(t) ? 'choice' : 'text');
 
-export function registerReports({ on, json, file, fail, campaigns, agents, agentByKey, users, orgOf, nowIso, redial, isDialled, isReached }) {
+export function registerReports({ on, json, file, fail, campaigns, agents, agentByKey, users, orgOf, nowIso, redial, isDialled, isReached, rowStates, skippedRows }) {
   const inWindow = (q) => {
     const from = Date.now() - Number(q.get('days') || 30) * 86400000; const org = orgOf(q);
     return campaigns.filter((c) => (c.org_id || 'org_moglix') === org && Date.parse(c.created_at) >= from && (!q.get('campaign_id') || c.campaign_id === q.get('campaign_id')) && (!q.get('agent') || c.agent === q.get('agent')));
@@ -176,11 +176,26 @@ export function registerReports({ on, json, file, fail, campaigns, agents, agent
     const result = follow || o === 'bad_data' ? 'needs_action' : g === 'in_progress' || asked ? 'in_progress' : o === 'completed' && !n ? 'successful' : 'closed';
     return { tags, result, why: asked ? 'Asked to be called later' : n?.label || OUTCOMES[o]?.label || '' };
   };
+  /**
+   * The unit a result is counted in. An agent with one row per call: the contact. An agent with several rows on a call: each row,
+   * because a call that went well can still leave a row open. Rows skipped before any call are closed.
+   */
+  const unitsOf = (c, x, never) => {
+    const st = statOf(c, x, never); if (!rowStates || !x.items?.length) return [{ result: st.result, why: st.why, row: null }];
+    const follow = st.tags.includes('follow_up');
+    return rowStates(c, x).map((r) => ({ row: r, why: `${r.say || 'Row ' + r.row}: ${r.state === 'answered' ? 'Answered' : r.state === 'not_covered' ? 'Not covered on the call' : r.state === 'waiting' ? 'Waiting for its call' : r.state === 'not_reached' ? 'Not reached' : r.state}`,
+      result: r.state === 'answered' ? 'successful' : r.state === 'rejected' ? 'needs_action' : r.state === 'skipped' ? 'closed' : follow ? 'needs_action' : r.state === 'waiting' || r.state === 'not_covered' || r.state === 'partly' || st.result === 'in_progress' ? 'in_progress' : 'closed' }));
+  };
   const STAT_KEYS = ['not_dialled', 'callbacks_due', 'answers_missing', 'tech_failures', 'follow_up']; const RESULT_KEYS = ['successful', 'needs_action', 'in_progress', 'closed'];
   on('GET', '/api/reports/rows', ({ res, q }) => {
     const want = q.get('stat') || ''; const never = neverReached(orgOf(q)); const out = [];
     for (const c of inWindow(q)) for (const x of c.contacts) {
-      const st = statOf(c, x, never); if (!st.tags.includes(want) && st.result !== want) continue;
+      const st = statOf(c, x, never);
+      if (RESULT_KEYS.includes(want)) {
+        for (const u of unitsOf(c, x, never)) if (u.result === want) out.push({ campaign_id: c.campaign_id, campaign_name: c.name, primary_id: x.primary_id, name: x.name, phone: x.phone, status: OUTCOMES[contactOutcome(x)]?.label || '', why: u.why, call_back: '', has_call: !!x.call_id });
+        continue;
+      }
+      if (!st.tags.includes(want)) continue;
       out.push({ campaign_id: c.campaign_id, campaign_name: c.name, primary_id: x.primary_id, name: x.name, phone: x.phone, status: OUTCOMES[contactOutcome(x)]?.label || '', why: st.why,
         call_back: callbackKeys(c.agent).map((k) => x.outputs?.[k]).filter(Boolean).join(' '), has_call: !!x.call_id });
     }
@@ -197,12 +212,14 @@ export function registerReports({ on, json, file, fail, campaigns, agents, agent
       if (!groups.has(k)) groups.set(k, { key: k, label, ...blank() }); add(groups.get(k), c, x); add(total, c, x);
       const d = dayOf(c, x); if (!days.has(d)) days.set(d, { day: d, ...blank() }); add(days.get(d), c, x);
       const o = contactOutcome(x); outcomes[o] = (outcomes[o] || 0) + 1;
-      const st = statOf(c, x, add.never); for (const t of st.tags) stats[t]++; result[st.result]++;
+      const st = statOf(c, x, add.never); for (const t of st.tags) stats[t]++; for (const u of unitsOf(c, x, add.never)) result[u.result]++;
       if (st.tags.includes('not_dialled')) undialled[OUTCOMES[o].label] = (undialled[OUTCOMES[o].label] || 0) + 1;
     }
+    if (skippedRows && !only) for (const c of list) result.closed += skippedRows(c).length;
     const rows = [...groups.values()].sort((a, b) => by === 'day' ? b.key.localeCompare(a.key) : b.dialled - a.dialled || a.label.localeCompare(b.label));
     return { by, days: Number(q.get('days') || 30), generated_at: nowIso(), total, rows, trend: [...days.values()].sort((a, b) => a.day.localeCompare(b.day)), by_outcome: outcomes, columns: columnsOf(list), campaigns: list.length,
       input: inputOf(only ? [] : list), why: whyFor(list), rows_line: rowsOf(list),
+      result_unit: list.length && list.every((c) => agentByKey(c.agent)?.input_plan?.mode === 'group') ? 'rows' : list.some((c) => agentByKey(c.agent)?.input_plan?.mode === 'group') ? 'rows and contacts' : 'contacts',
       stats: { ...stats, not_dialled_why: Object.entries(undialled).map(([label, count]) => ({ label, count })).sort((a, b) => b.count - a.count) }, result,
       // Agents with calls in the period (to pick one), and that agent's own answers when one is picked.
       agent: q.get('agent') || '', agents: [...new Set(campaigns.filter((c) => (c.org_id || 'org_moglix') === orgOf(q)).map((c) => c.agent))].map((key) => ({ key, label: agentByKey(key)?.label || key })).sort((a, b) => a.label.localeCompare(b.label)),

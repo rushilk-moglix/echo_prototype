@@ -149,11 +149,12 @@ import { outcomeView, dialSentence, telephonyLine, statusHover } from '../../uti
                 @case ('rows') {
                   <div class="scroll-x">
                     <table class="table cp-rows">
-                      <thead><tr><th>#</th>@for (c of contact().row_columns; track c) { <th>{{ nice(c) }}</th> }@for (f of answerCols(); track f) { <th class="cp-ans">{{ nice(f) }}</th> }</tr></thead>
+                      <thead><tr><th>#</th><th>Row state</th>@for (c of contact().row_columns; track c) { <th>{{ nice(c) }}</th> }@for (f of answerCols(); track f) { <th class="cp-ans">{{ nice(f) }}</th> }</tr></thead>
                       <tbody>
                         @for (r of contact().rows; track r.n) {
                           <tr [title]="'File row ' + r.row">
                             <td class="mono">{{ r.n }}</td>
+                            <td class="nowrap"><span [class]="'tag ' + (r.state === 'answered' ? 'ok' : r.state === 'not_covered' ? 'warn' : 'muted')">{{ r.state_label }}</span>@if (r.saved_second !== null && r.saved_second !== undefined) { <div class="row-sub mono" title="Saved as soon as it was answered">saved at {{ secs(r.saved_second) }}</div> }@if (r.last) { <div class="row-sub">Last time: {{ r.last }}</div> }</td>
                             @for (c of contact().row_columns; track c) { <td>{{ r.values[c] }}</td> }
                             @for (f of answerCols(); track f) { <td class="cp-ans">{{ show(r.answer?.[f]) }}</td> }
                           </tr>
@@ -278,6 +279,7 @@ export class CallAnalysisComponent implements OnInit {
   phone = computed(() => this.contact()?.contact?.phone || this.call()?.phone || '');
   summary = computed(() => this.analysis()?.executive_summary || this.call()?.summary || '');
   /** Why this call has no answers, from the same fixed list as the campaign page and the results file. */
+  secs(s: number): string { return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
   noAnswers = computed(() => this.contact()?.no_answers || this.call()?.no_answers || null);
   fromTranscript = computed(() => (this.contact()?.answers_source || this.call()?.answers_source) === 'transcript');
   /** Side tabs that have something to show; the first one opens. */
