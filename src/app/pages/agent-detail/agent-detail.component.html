@@ -1,7 +1,7 @@
 @if (!agent()) {
   <div class="page">
     @if (error()) { <div class="note bad">{{ error() }}</div> }
-    @else { <div class="note">Loading…</div> }
+    @else { <app-echo-loader label="Loading the agent"></app-echo-loader> }
   </div>
 } @else {
   <div class="page">
@@ -58,6 +58,20 @@
         }
       </ul>
     </div>
+
+    <!-- Change the agent by saying what to change; the result lands in the draft for review. -->
+    <form class="ai-bar" (ngSubmit)="askAi()">
+      <app-icon name="brain" [size]="15"></app-icon>
+      <input class="input" name="aiAsk" [ngModel]="aiAsk()" (ngModelChange)="aiAsk.set($event)" aria-label="Tell Echo what to change"
+        placeholder="Tell Echo what to change: speak slower, also collect the invoice number, never promise a refund" />
+      <button class="btn btn-sm" [disabled]="aiBusy() || !aiAsk().trim()">{{ aiBusy() ? 'Changing…' : 'Change · ' + aiCost() + ' credits' }}</button>
+    </form>
+    @if (aiDone().length) {
+      <div class="note good ai-done">
+        <b>Changed in your draft:</b> @for (c of aiDone(); track $index) { <span>{{ c }}</span> }
+        <span class="row-sub">Check it, then Save. Discard undoes it.</span>
+      </div>
+    }
 
     <div>
       <div class="card" style="margin: 0">

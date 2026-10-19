@@ -13,6 +13,8 @@ import { CallAnalysisComponent } from './pages/call-analysis/call-analysis.compo
 import { SettingsComponent } from './pages/settings/settings.component';
 import { TeamComponent } from './pages/team/team.component';
 import { FollowUpsComponent } from './pages/follow-ups/follow-ups.component';
+import { AgentBuilderComponent } from './pages/agent-builder/agent-builder.component';
+import { CreditsComponent } from './pages/credits/credits.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent, title: 'Sign in · Echo' },
@@ -25,12 +27,14 @@ export const routes: Routes = [
       { path: 'console', component: CallConsoleComponent, title: 'Call console · Echo' },
       { path: 'calls/:id', component: CallAnalysisComponent, title: 'Call · Echo' },
       { path: 'agents', component: AgentsComponent, title: 'Agents · Echo' },
+      { path: 'agents/new', component: AgentBuilderComponent, title: 'New agent · Echo' },
       { path: 'agents/:key', component: AgentDetailComponent, title: 'Agent · Echo', canDeactivate: [(c: AgentDetailComponent) => c.canLeave()] },
       { path: 'campaigns', component: CampaignsComponent, title: 'Campaigns · Echo' },
       { path: 'campaigns/:id', component: CampaignDetailComponent, title: 'Campaign · Echo' },
       { path: 'campaigns/:cid/contacts/:pid', component: CallAnalysisComponent, title: 'Call · Echo' },
       { path: 'follow-ups', component: FollowUpsComponent, title: 'Follow ups · Echo' },
       { path: 'team', component: TeamComponent, title: 'Team · Echo' },
+      { path: 'credits', component: CreditsComponent, title: 'Credits · Echo' },
       { path: 'settings', component: SettingsComponent, title: 'Settings · Echo' },
       { path: 'docs', component: DocsComponent, title: 'Documentation · Echo' },
       { path: '', redirectTo: 'overview', pathMatch: 'full' },

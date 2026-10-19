@@ -1,4 +1,5 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
+import { EchoLoaderComponent } from '../echo-mark/echo-mark.component';
 import { Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { HintComponent } from '../hint/hint.component';
@@ -13,7 +14,7 @@ interface Tile { key: string; label: string; help: string; count: number; sub: s
 @Component({
   selector: 'app-stat-row',
   standalone: true,
-  imports: [RouterLink, HintComponent, IconComponent],
+  imports: [EchoLoaderComponent, RouterLink, HintComponent, IconComponent],
   template: `
     <div class="card sr">
       @if (total()) {
@@ -57,7 +58,7 @@ interface Tile { key: string; label: string; help: string; count: number; sub: s
             <button class="icon-btn" (click)="list.set(null)" aria-label="Close"><app-icon name="close" [size]="16"></app-icon></button>
           </div>
           <div class="modal-body flush">
-            @if (!l.rows) { <div class="empty"><div class="empty-sub">Loading…</div></div> }
+            @if (!l.rows) { <app-echo-loader label="Loading rows" [size]="32"></app-echo-loader> }
             @for (r of l.rows || []; track r.campaign_id + r.primary_id) {
               <a class="sr-item" [routerLink]="['/campaigns', r.campaign_id, 'contacts', r.primary_id]" (click)="list.set(null)">
                 <span><span class="sr-name">{{ r.name || r.phone }}</span><span class="row-sub mono">{{ r.phone }}</span></span>

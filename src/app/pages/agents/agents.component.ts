@@ -1,4 +1,5 @@
 import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
+import { EchoLoaderComponent, EchoMarkComponent } from '../../components/echo-mark/echo-mark.component';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
@@ -34,7 +35,7 @@ type SyncState = { label: string; cls: string; title: string };
 @Component({
   selector: 'app-agents',
   standalone: true,
-  imports: [FormsModule, IconComponent, ConfirmComponent, HintComponent],
+  imports: [EchoLoaderComponent, EchoMarkComponent, FormsModule, IconComponent, ConfirmComponent, HintComponent],
   template: `
     <div class="page">
       <div class="page-head">
@@ -65,12 +66,12 @@ type SyncState = { label: string; cls: string; title: string };
         </div>
 
         @if (loading()) {
-          <div class="card-body">Loading…</div>
+          <app-echo-loader label="Loading agents"></app-echo-loader>
         } @else if (rows().length === 0) {
           <div class="empty">
-            <div class="empty-icon"><app-icon name="bot" [size]="22"></app-icon></div>
+            <app-echo-mark mode="intro" [size]="48"></app-echo-mark>
             <div class="empty-title">No agents yet</div>
-            <div class="empty-sub">Create one, or start from a copy of an existing agent.</div>
+            <div class="empty-sub">Say the job and drop your files; Echo sets the agent up for you.</div>
             <button class="btn btn-primary" style="margin-top: 12px" (click)="openNew()">New agent</button>
           </div>
         } @else if (shown().length === 0) {
@@ -288,10 +289,8 @@ export class AgentsComponent implements OnInit {
   open(key: string): void { this.router.navigate(['/agents', key]); }
   testCall(key: string): void { this.router.navigate(['/console'], { queryParams: { agent: key } }); }
 
-  openNew(): void {
-    this.label.set(''); this.description.set(''); this.copyFrom.set(''); this.oznCampaign.set(''); this.createError.set('');
-    this.creating.set(true);
-  }
+  /** New agents start in the AI builder; blank and copy are offered there too. */
+  openNew(): void { this.router.navigate(['/agents/new']); }
 
   startClone(a: AgentRow): void {
     this.menuFor.set(null);

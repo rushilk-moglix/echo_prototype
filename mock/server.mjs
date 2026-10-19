@@ -15,6 +15,8 @@ import { simulate, record, reOutcome, planAttempts, rowTiming, RETRY } from './o
 import { INTEGRATION_CATALOG } from './integrations.mjs';
 import { OUTCOMES, DEFAULT_RETRY, retryAgain, contactOutcome, setNoReplyUnder, noAnswers } from './outcome.mjs';
 import { registerReports } from './reports.mjs';
+import { registerCredits } from './credits.mjs';
+import { registerBuilder, readTable } from './builder.mjs';
 
 const DATALOAD_PORT = Number(process.env.ECHO_API_PORT || 8090);
 const BACKEND_PORT = Number(process.env.ECHO_WEBRTC_PORT || 8080);
@@ -866,10 +868,26 @@ function multipart(req, buf) {
   return out;
 }
 const norm = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+// Words that mean the same column in the sheets people actually send.
+const SYN = [['phone', 'mobile', 'contact', 'number', 'cell', 'tel', 'whatsapp', 'no'], ['name', 'person', 'supplier', 'vendor', 'customer', 'party', 'contact'], ['order', 'po', 'purchase'],
+  ['qty', 'quantity', 'units', 'pcs', 'pending', 'open'], ['date', 'due', 'promised', 'delivery', 'eta', 'by'], ['code', 'id', 'no', 'number'], ['amount', 'value', 'outstanding', 'balance', 'rs', 'inr'], ['invoice', 'bill', 'inv'], ['item', 'material', 'product', 'description', 'sku']];
+function closeness(key, header) {
+  const a = String(key).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean), b = String(header || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  let s = 0;
+  for (const x of a) { let best = 0; for (const y of b) best = Math.max(best, x === y ? 2 : SYN.some((g) => g.includes(x) && g.includes(y)) ? 1 : x.length > 3 && y.length > 3 && x.slice(0, 4) === y.slice(0, 4) ? 1 : 0); s += best; }
+  return s / Math.max(a.length, 1);
+}
 function proposeMapping(agent, headers) {
+  const exact = new Set(agent.input_variables.map((v) => headers.findIndex((h) => norm(h) === norm(v.key))).filter((i) => i >= 0));
+  const used = new Set(exact);
   return agent.input_variables.map((v, i) => {
     let index = headers.findIndex((h) => norm(h) === norm(v.key));
     let matched_by = index >= 0 ? 'name' : '';
+    if (index < 0) {
+      // Different words for the same column: pick the closest unused header.
+      const best = headers.map((h, j) => ({ j, c: used.has(j) ? 0 : closeness(v.key, h) })).sort((x, y) => y.c - x.c)[0];
+      if (best && best.c >= 1) { index = best.j; matched_by = 'ai'; used.add(index); }
+    }
     if (index < 0 && i < headers.length && !headers[i]) { index = i; matched_by = 'position'; }
     return {
       column: v.key, index: index >= 0 ? index : null, header: index >= 0 ? headers[index] : null, matched_by: matched_by || null,
@@ -1198,7 +1216,7 @@ on('POST', '/api/agents/:key/check-file', ({ res, p, req, raw: buf }) => {
   const a = agentByKey(p.key); if (!a) return fail(res, 404, 'Agent not found');
   const form = multipart(req, buf);
   if (!form.file?.content) return fail(res, 400, 'No file received');
-  let rows; try { rows = readXlsx(form.file.content); } catch { return fail(res, 400, 'Could not read that spreadsheet'); }
+  let rows; try { rows = readTable(form.file.filename || 'f.xlsx', form.file.content); } catch { return fail(res, 400, 'Could not read that spreadsheet'); }
   const [headers, ...data] = rows;
   const draft = { ...a, input_plan: form.plan ? JSON.parse(form.plan) : a.input_plan };
   const prop = proposeMapping(draft, headers);
@@ -1209,7 +1227,8 @@ on('POST', '/api/agents/:key/check-file', ({ res, p, req, raw: buf }) => {
   const keys = draft.input_variables.map((v) => v.key);
   const steady = keys.filter((k) => groups.every((g) => new Set(g.rows.map((r) => r.ctx[k])).size <= 1));
   json(res, 200, { rows: fileRows.length, calls: groups.length, biggest: Math.max(0, ...groups.map((g) => g.rows.length)), split: groups.filter((g) => g.parts > 1 && g.part === 1).length,
-    bad: fileRows.filter((r) => r.bad).length, missing_columns: missing, steady_columns: steady,
+    bad: fileRows.filter((r) => r.bad).length, missing_columns: missing, missing_required: prop.filter((m) => m.index === null && m.required).map((m) => m.column), steady_columns: steady,
+    headers, mapping: prop.map((m) => ({ column: m.column, index: m.index, header: m.header, matched_by: m.matched_by, required: m.required })), answer_credits: groups.reduce((n, g) => n + g.rows.length, 0) * credits.price('answered_line'),
     sample: groups.slice(0, 4).map((g) => ({ key: g.key, rows: g.rows.length, first: g.rows.slice(0, 3).map((r) => r.row) })) });
 });
 on('POST', '/api/agents/:key/references', ({ res, p, req, raw: buf }) => {
@@ -1310,8 +1329,9 @@ on('POST', '/api/campaigns/:id/upload', ({ res, p, q, req, raw: buf }) => {
   const form = multipart(req, buf);
   if (!form.file?.content) return fail(res, 400, 'No file received');
   let rows;
-  try { rows = readXlsx(form.file.content); } catch { return fail(res, 400, 'Could not read that spreadsheet'); }
+  try { rows = readTable(form.file.filename || 'f.xlsx', form.file.content); } catch { return fail(res, 400, 'Could not read that spreadsheet'); }
   if (!rows.length) return fail(res, 400, 'The sheet is empty');
+  if (q.get('dry_run') !== 'true' && credits.view(c.org_id || 'org_moglix').balance <= 0) return fail(res, 402, 'The workspace is out of credits. Buy credits to start calling.');
   const [headers, ...data] = rows;
   const proposal = proposeMapping(a, headers);
   if (q.get('dry_run') === 'true') {
@@ -1461,6 +1481,9 @@ on('GET', '/webrtc/recording/:sid', ({ res, p, q }) => file(res, wav(callById(p.
 // ── Server ───────────────────────────────────────────────────────────────────
 // Runs wherever the mock runs (node, the demo's service worker, the single file): seeded calls get their transcript read once.
 fillFromTranscripts();
+const credits = registerCredits({ on, json, fail, campaigns, agentByKey, orgOf, nowIso, rowStates, planOf, who: () => signedInEmail, isPlatformAdmin: () => (me() ? !!me().platform_admin : true) });
+registerBuilder({ on, json, fail, multipart, agents, agentByKey, agentDefaults, orgOf, nowIso, who: () => signedInEmail, credits, pushAgent: (a) => pushAgent(a),
+  flowsOf: (org) => OZN_CAMPAIGNS.filter((f) => f.org_id === org && f.enabled && f.direction !== 'inbound'), syncTargets });
 registerReports({ on, json, file, fail, campaigns, agents, agentByKey, users, orgOf, nowIso, rowStates, skippedRows: (c) => (c.skipped_rows || []).map((s) => ({ ...s, say: sayRow(agentByKey(c.agent), s.values) })),
   isDialled: (c, r) => !(r.status === 'input_validation_failed' || r.reason === 'data_validation_failed' || r.reason === 'duplicate_row' || !agentByKey(c.agent)?.ozonetel_campaign) && !!(r.attempts_detail?.length || ATTEMPTED.has(r.status)),
   isReached: (r) => (r.attempts_detail || []).some((a) => a.stream?.connected || a.mapped?.result === 'technical_drop') || HAS_CALL.has(r.status),

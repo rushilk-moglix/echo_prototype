@@ -111,6 +111,15 @@ export class DocsComponent {
       '2. Create an agent: write the prompt, list the call data it needs and the answers it must collect (Agents).',
       '3. Test it from the Call console in your browser or on your phone.',
       '4. Start a campaign: pick the agent, download its template, fill it in, drop it back and start.'] },
+    { id: 'build-ai', title: 'Build an agent with AI', icon: 'brain', link: { to: '/agents/new', label: 'New agent' }, body: [
+      'New agent starts here. Say the job in a sentence, or pick a Pack, and drop anything you have: the list you call from (.xlsx or .csv), a sample of the answers you want back, your SOP, customer documents, a database design or a call script.',
+      'Echo reads the files: the list gives the columns, the phone number and how rows group into calls; the sample gives the answers to save; the SOP gives rules; documents become knowledge it searches on calls; a database design suggests lookups.',
+      'It then asks only what it could not work out, each with its own answer picked, so you can accept all in one click. Check the result and create the agent. Reading is free; creating costs credits.',
+      'To change an agent later, write the change in the line above its tabs, for example: speak slower, also collect the invoice number. The change lands in the draft for you to check and save.'] },
+    { id: 'credits', title: 'Credits', icon: 'coins', link: { to: '/credits', label: 'Open Credits' }, body: [
+      'One balance pays for everything: answered lines, test calls, building and changing agents with AI, phone numbers, pilots and work our team builds for you. Calls nobody picks up are free.',
+      'Buy a pack from Credits; bigger packs add free credits. Turn on auto top up so calls never stop. Calls pause when the balance reaches zero.',
+      'Ask our team for a custom agent or integration from Credits, Agents or Settings. A small deposit holds the slot, we quote within a working day, and you accept or cancel; cancelling returns the deposit.'] },
     { id: 'agents', title: 'Agents', icon: 'bot', guides: ['one_row', 'group_rows'], link: { to: '/agents', label: 'Open Agents' }, body: [
       'An agent is a prompt, the call data it is given, the answers it collects and how it sounds. Tabs: Prompt, Call data, Answers, Settings.',
       'Call data can be one row per call, or several rows per call grouped by any column, so one contact hears about all their items at once.',

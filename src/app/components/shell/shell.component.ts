@@ -7,10 +7,11 @@ import { ApiService } from '../../services/api.service';
 import { fmtNum, fmtSecs } from '../../utils/format';
 import { setNoReplyUnder } from '../../utils/status';
 import { installDialogKeys } from '../../core/a11y/dialog-keys';
+import { CreditsService, fmtCredits } from '../../services/credits.service';
 
 const NAV = [
   { to: '/overview', icon: 'overview', label: 'Overview' },
-  { to: '/console', icon: 'mic', label: 'Call console' },
+  { to: '/console', icon: 'mic', label: 'Call console', runOnly: true },
   // platform_admin OR agent_admin server-side (AgentAdminGuard); hidden here
   // for everyone else purely so the link isn't a dead end — see
   // ShellComponent.nav. Org Admin/Campaign Manager still pick an agent when
@@ -22,8 +23,9 @@ const NAV = [
   // org_admin-only server-side (RolesGuard); hidden here for everyone else
   // purely so the link isn't a dead end — see ShellComponent.nav.
   { to: '/team', icon: 'user', label: 'Team', orgAdminOnly: true },
+  { to: '/credits', icon: 'coins', label: 'Credits', runOnly: true },
   { to: '/settings', icon: 'settings', label: 'Settings' },
-];
+] as { to: string; icon: string; label: string; agentAdminOnly?: boolean; orgAdminOnly?: boolean; runOnly?: boolean }[];
 
 @Component({
   selector: 'app-shell',
@@ -64,6 +66,9 @@ const NAV = [
         </nav>
 
         <div class="sb-today sb-txt">
+          @if (auth.canRun() && credits.wallet()) {
+            <a routerLink="/credits" class="sb-row sb-credits" [class.low]="credits.low()" [title]="credits.low() ? 'Credits are running low' : 'Credits left in this workspace'"><span>Credits</span><b class="mono">{{ fmtCredits(credits.balance()) }}</b></a>
+          }
           <span class="sb-k">Today</span>
           <span class="sb-row"><span>Calls</span><b class="mono">{{ fmtNum(today()?.total_calls ?? 0) }}</b></span>
           <span class="sb-row"><span>Talk time</span><b class="mono">{{ fmtSecs(today()?.funnel?.talk_seconds ?? 0) }}</b></span>
@@ -106,6 +111,8 @@ export class ShellComponent implements OnInit {
   nav = NAV;
   fmtNum = fmtNum;
   fmtSecs = fmtSecs;
+  fmtCredits = fmtCredits;
+  credits = inject(CreditsService);
   healthData = this.healthService.health;
   today = this.healthService.todayMetrics;
   activeCalls = computed(() => this.today()?.active_calls || 0);
@@ -120,15 +127,16 @@ export class ShellComponent implements OnInit {
   isAgentAdmin = computed(() => !!this.auth.me()?.platform_admin || !!this.auth.me()?.agent_admin);
   visibleNav = computed(() =>
     this.nav.filter(
-      (n) => (!n.orgAdminOnly || this.isOrgAdmin()) && (!n.agentAdminOnly || this.isAgentAdmin()),
+      (n) => (!n.orgAdminOnly || this.isOrgAdmin()) && (!n.agentAdminOnly || this.isAgentAdmin()) && (!n.runOnly || this.auth.canRun()),
     ),
   );
 
   /** Pages grouped for the side bar; order is unchanged. */
   groups = computed(() => {
     const v = this.visibleNav();
-    const work = v.filter((n) => !['/team', '/settings'].includes(n.to));
-    const ws = v.filter((n) => ['/team', '/settings'].includes(n.to));
+    const WS = ['/team', '/credits', '/settings'];
+    const work = v.filter((n) => !WS.includes(n.to));
+    const ws = v.filter((n) => WS.includes(n.to));
     // Documentation is for everyone, at the end of the list.
     const help = [{ to: '/docs', icon: 'book', label: 'Documentation' }];
     return [{ label: 'Work', items: work }, ...(ws.length ? [{ label: 'Workspace', items: ws }] : []), { label: 'Help', items: help }];
@@ -182,6 +190,7 @@ export class ShellComponent implements OnInit {
     this.applyTheme();
     this.media.addEventListener('change', this.applyTheme);
     this.loadFollowCount(); setInterval(() => this.loadFollowCount(), 15000);
+    this.credits.refresh(); setInterval(() => this.credits.refresh(), 30000);
     // A page refresh restores accessToken/currentOrgId from localStorage but
     // not `me` (never persisted — it's re-fetched, not stored, so a role
     // change server-side is picked up on the next load rather than cached).

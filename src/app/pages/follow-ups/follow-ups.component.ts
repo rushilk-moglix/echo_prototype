@@ -42,6 +42,11 @@ import { ConfirmComponent } from '../../components/confirm/confirm.component';
             <option value="">Any owner</option><option value="-">No owner yet</option>
             @for (o of owners(); track o.email) { <option [value]="o.email">{{ o.email }}</option> }
           </select>
+          @if (state() === 'open' && auth.canRun()) {
+            <!-- One click for the whole filtered list instead of opening each row. -->
+            @if (callable().length > 1) { <button class="btn btn-sm btn-primary" (click)="callAll()" [disabled]="!!busy()" [title]="'Sends these ' + callable().length + ' contacts back to their agents. Blocked numbers and wrong numbers stay here.'"><app-icon name="phoneOut" [size]="13"></app-icon> {{ busy() === 'all' ? 'Sending…' : 'Call ' + callable().length + ' again' }}</button> }
+            @if (unowned().length > 1) { <button class="btn btn-sm" (click)="takeAll()" [disabled]="!!busy()">Take {{ unowned().length }} without an owner</button> }
+          }
         </div>
 
         @if (!shown().length) {
@@ -72,7 +77,7 @@ import { ConfirmComponent } from '../../components/confirm/confirm.component';
                       </select>
                     </label>
                     <label class="field"><span class="field-label">Number <app-hint text="Correct the number here. The old number is kept in the notes."></app-hint></span>
-                      <span class="fu-inline"><input class="input mono" [(ngModel)]="phone[key(r)]" [placeholder]="r.phone" inputmode="numeric" maxlength="13" [disabled]="state() === 'done'" /><button class="btn btn-sm" [disabled]="!validPhone(r)" (click)="savePhone(r)">Save</button></span>
+                      <span class="fu-inline"><input class="input mono" [(ngModel)]="phone[key(r)]" [placeholder]="r.phone" inputmode="numeric" maxlength="13" [disabled]="state() === 'done' || !auth.canRun()" /><button class="btn btn-sm" [disabled]="!validPhone(r)" (click)="savePhone(r)">Save</button></span>
                     </label>
                     <div class="fu-facts">
                       <span><span class="row-sub">Call status</span><b>{{ r.status }}</b></span>
@@ -93,10 +98,10 @@ import { ConfirmComponent } from '../../components/confirm/confirm.component';
                   <div class="fu-acts">
                     <button class="btn btn-sm" (click)="openCampaign(r)"><app-icon name="external" [size]="13"></app-icon> Open the call</button>
                     <span style="flex: 1"></span>
-                    @if (state() === 'open') {
+                    @if (state() === 'open' && auth.canRun()) {
                       <button class="btn btn-sm" (click)="closing.set(r)">Close, no call needed</button>
                       <button class="btn btn-sm btn-primary" (click)="callAgain(r)" [disabled]="busy() === key(r)" title="Send this contact back to the agent"><app-icon name="phoneOut" [size]="13"></app-icon> {{ busy() === key(r) ? 'Sending…' : 'Call again' }}</button>
-                    } @else {
+                    } @else if (auth.canRun()) {
                       <button class="btn btn-sm" (click)="patch(r, { state: 'open' })">Reopen</button>
                     }
                   </div>
@@ -114,7 +119,7 @@ import { ConfirmComponent } from '../../components/confirm/confirm.component';
 })
 export class FollowUpsComponent implements OnInit, OnDestroy {
   private api = inject(ApiService);
-  private auth = inject(AuthService);
+  auth = inject(AuthService);
   private router = inject(Router);
   private timer: any = null;
 
@@ -155,6 +160,21 @@ export class FollowUpsComponent implements OnInit, OnDestroy {
   async callAgain(r: any): Promise<void> {
     this.busy.set(this.key(r));
     try { await this.api.followUpCallAgain(r.campaign_id, r.primary_id, { by: this.me() }); await this.load(); } catch (e: any) { this.error.set(e.message); }
+    this.busy.set('');
+  }
+  /** Contacts worth calling again: a wrong number needs fixing first and a blocked (DND) number cannot be called. */
+  callable = computed(() => this.shown().filter((r) => !/blocked|wrong/i.test(r.reason || '')));
+  unowned = computed(() => this.shown().filter((r) => !r.owner));
+  async callAll(): Promise<void> {
+    this.busy.set('all'); this.error.set('');
+    try { for (const r of this.callable()) await this.api.followUpCallAgain(r.campaign_id, r.primary_id, { by: this.me() }); await this.load(); }
+    catch (e: any) { this.error.set(e.message); }
+    this.busy.set('');
+  }
+  async takeAll(): Promise<void> {
+    this.busy.set('all');
+    try { for (const r of this.unowned()) await this.api.updateFollowUp(r.campaign_id, r.primary_id, { owner: this.me() }); await this.load(); }
+    catch (e: any) { this.error.set(e.message); }
     this.busy.set('');
   }
   async closeRow(r: any): Promise<void> { this.closing.set(null); await this.patch(r, { state: 'done', closed_as: 'No call needed' }); }

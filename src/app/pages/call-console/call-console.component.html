@@ -3,7 +3,7 @@
     <h1 class="page-title">Call console</h1>
     <div class="page-actions">
       <span [class]="'pill' + (live() ? ' live' : '')">
-        <span [class]="'dot' + (live() ? ' live' : '')"></span>
+        @if (live() || dialing()) { <app-echo-mark [mode]="live() ? 'live' : 'inline'" [size]="18" [tile]="false"></app-echo-mark> } @else { <span class="dot"></span> }
         {{ live() ? 'Live · ' + clockFn(elapsedSec()) : statusText() }}
       </span>
       @if (isPhoneCall()) {

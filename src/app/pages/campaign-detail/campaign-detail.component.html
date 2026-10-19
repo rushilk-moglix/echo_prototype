@@ -28,12 +28,13 @@
           <a class="icon-btn" [href]="api.campaignResultsUrl(id)" download title="Results: your file with outcome and answers per row" aria-label="Download results"><app-icon name="results" [size]="16"></app-icon></a>
           <button class="icon-btn" (click)="downloadCampaignZip()" [disabled]="busy() === 'exporting'" title="All transcripts and recordings (zip)" aria-label="Download all transcripts and recordings"><app-icon name="zip" [size]="16"></app-icon></button>
         }
-        @if (!contacts().length) {
+        @if (!contacts().length && auth.canRun()) {
           <button class="btn" (click)="triggerUpload()" [disabled]="!canUpload()" [title]="uploadBlockedReason() || 'Upload your list and start calling'">
             <app-icon name="upload" [size]="13"></app-icon> {{ busy() === 'checking' ? 'Reading…' : 'Upload list' }}
           </button>
         }
-        @if (isOpen()) {
+        @if (!auth.canRun()) {
+        } @else if (isOpen()) {
           <button class="btn btn-stop" (click)="askStop.set(true)" [disabled]="!!busy()"><app-icon name="close" [size]="13"></app-icon> Stop campaign</button>
         } @else if (pendingCount() > 0) {
           @if (confirmDial()) {

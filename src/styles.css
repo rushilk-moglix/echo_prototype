@@ -2322,6 +2322,7 @@ details.adv[open] { background: var(--card); border-style: solid; }
 .sb-k { font-family: var(--mono); font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--sb-mute); }
 .sb-row { display: flex; justify-content: space-between; }
 .sb-row b { color: var(--sb-ink); font-weight: 500; }
+.sb-credits { color: inherit; text-decoration: none; padding-bottom: 6px; border-bottom: 1px solid var(--sb-line); } .sb-credits:hover b { color: var(--ds-accent, #047857); } .sb-credits.low b { color: var(--red); }
 .sb-foot { padding: 10px 14px 16px; border-top: 1px solid var(--sb-line); display: grid; gap: 10px; }
 .sb-org { display: grid; gap: 4px; }
 .sb:not(.open) .sb-org { display: none; }
@@ -2788,3 +2789,21 @@ code, kbd, samp, pre { font-family: var(--ds-mono); }
   .cs-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .cs-facts { gap: 18px; }
 }
+
+/* Change an agent with AI: one line under the checklist. */
+.ai-bar { display: flex; gap: 8px; align-items: center; padding: 6px 6px 6px 12px; border: 1px solid var(--ds-border); border-radius: 12px; background: var(--ds-surface); }
+.ai-bar > app-icon { color: var(--ds-accent); flex: none; }
+.ai-bar .input { border: 0; box-shadow: none; background: transparent; flex: 1; min-width: 0; }
+.ai-bar .input:focus { outline: none; box-shadow: none; }
+.ai-bar:focus-within { border-color: var(--ds-accent); box-shadow: 0 0 0 3px var(--ds-accent-soft); }
+.ai-done { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.ai-done span:not(.row-sub) { padding-right: 10px; border-right: 1px solid var(--ds-success-border); }
+.set-acts { display: inline-flex; gap: 6px; flex-wrap: wrap; margin-left: auto; }
+/* Overview: what needs a person today */
+.ov-needs { display: flex; gap: 8px; flex-wrap: wrap; }
+.ov-need { display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border-radius: 10px; border: 1px solid var(--ds-border); background: var(--ds-surface); font: inherit; font-size: 13px; color: var(--ds-text); cursor: pointer; }
+.ov-need:hover { border-color: var(--ds-accent); }
+.ov-need.warn { background: var(--ds-warning-bg); border-color: var(--ds-warning-border); }
+.ov-need.bad { background: var(--ds-danger-bg); border-color: var(--ds-danger-border); }
+.ov-need b { font-weight: 600; }
+.pill app-echo-mark { margin: -3px 2px -3px -4px; }

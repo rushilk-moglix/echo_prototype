@@ -2,9 +2,11 @@
   <div class="page-head">
     <h1 class="page-title">Campaigns</h1>
     <div class="page-actions">
+      @if (auth.canRun()) {
       <button class="btn btn-primary" (click)="creating.set(true)" [disabled]="!agents().length" [title]="agents().length ? 'Pick an agent, drop your list, start calling' : 'Create an agent first'">
         <app-icon name="plus" [size]="14"></app-icon> New campaign
       </button>
+      }
     </div>
   </div>
 
@@ -33,12 +35,12 @@
       </div>
     </div>
     @if (loading()) {
-      <div class="empty"><div class="empty-title">Loading…</div></div>
+      <app-echo-loader label="Loading campaigns"></app-echo-loader>
     } @else if (campaigns().length === 0) {
       <div class="empty">
-        <div class="empty-icon"><app-icon name="megaphone" [size]="18" [strokeWidth]="1.8"></app-icon></div>
+        <app-echo-mark mode="intro" [size]="48"></app-echo-mark>
         <div class="empty-title">No campaigns yet</div>
-        <div class="empty-sub">Use New campaign: pick an agent, drop your list, start.</div>
+        <div class="empty-sub">{{ auth.canRun() ? 'Use New campaign: pick an agent, drop your list, start.' : 'Campaigns shared with your group show here.' }}</div>
       </div>
     } @else {
       <div class="scroll-x">
@@ -81,7 +83,8 @@
                   <a class="icon-btn" [href]="api.campaignExportUrl(c.campaign_id)" download title="All transcripts and recordings (zip)" aria-label="Download transcripts and recordings"><app-icon name="zip" [size]="14"></app-icon></a>
                 }
                 <a class="icon-btn" [routerLink]="['/agents', c.agent]" title="Open the agent" aria-label="Open the agent"><app-icon name="bot" [size]="14"></app-icon></a>
-                @if (archived()) {
+                @if (!auth.canRun()) {
+                } @else if (archived()) {
                   <button class="btn btn-sm" (click)="restore(c)" [title]="'Restore ' + c.name">Restore</button>
                 } @else {
                   <button class="row-del" (click)="deletingAsk.set(c)"

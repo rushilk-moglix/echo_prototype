@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed, OnInit, HostListener, ViewChild } from '@angular/core';
+import { EchoLoaderComponent } from '../../components/echo-mark/echo-mark.component';
 import { CampaignNamePipe } from '../../pipes/campaign-name.pipe';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
@@ -24,7 +25,7 @@ import { outcomeView, dialSentence, telephonyLine, statusHover } from '../../uti
 @Component({
   selector: 'app-call-analysis',
   standalone: true,
-  imports: [CampaignNamePipe, RouterLink, IconComponent, PlayerComponent, HintComponent, GuideComponent, StatusReferenceComponent],
+  imports: [EchoLoaderComponent, CampaignNamePipe, RouterLink, IconComponent, PlayerComponent, HintComponent, GuideComponent, StatusReferenceComponent],
   template: `
     <div class="page cp">
       <div class="cp-bar">
@@ -48,7 +49,7 @@ import { outcomeView, dialSentence, telephonyLine, statusHover } from '../../uti
       </div>
 
       @if (loading()) {
-        <div class="empty"><div class="empty-title">Loading…</div></div>
+        <app-echo-loader label="Loading the call"></app-echo-loader>
       } @else if (error()) {
         <div class="note bad">{{ error() }}</div>
       } @else {

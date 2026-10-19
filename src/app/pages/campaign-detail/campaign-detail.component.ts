@@ -5,6 +5,7 @@ import { Component, inject, signal, OnInit, OnDestroy, ViewChild, ElementRef, co
 import { CampaignNamePipe } from '../../pipes/campaign-name.pipe';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
 import { IconComponent } from '../../components/icon/icon.component';
 import { ContactsBrowserComponent } from './contacts-browser.component';
 import { ColumnMappingComponent } from './column-mapping.component';
@@ -22,6 +23,7 @@ import { fmtSecs } from '../../utils/format';
 })
 export class CampaignDetailComponent implements OnInit, OnDestroy {
   api = inject(ApiService);
+  auth = inject(AuthService);
   private route = inject(ActivatedRoute);
 
   @ViewChild('inputRef') inputRef!: ElementRef<HTMLInputElement>;

@@ -57,6 +57,11 @@ export class AuthService {
   readonly currentMembership = computed(
     () => this.me()?.memberships.find((m) => m.org_id === this.currentOrgId()) || null,
   );
+  /** What the person may do here. Viewers ('user') only look; campaign managers run calls; admins also set up and pay. */
+  readonly role = computed<OrgRole | 'platform'>(() => (this.me()?.platform_admin ? 'platform' : this.currentMembership()?.role || 'user'));
+  readonly canAdmin = computed(() => this.role() === 'platform' || this.role() === 'org_admin');
+  readonly canRun = computed(() => this.canAdmin() || this.role() === 'campaign_manager');
+  readonly isViewer = computed(() => !!this.me() && !this.canRun());
 
   setAccessToken(value: string): void {
     localStorage.setItem(ACCESS_TOKEN_KEY, value || '');

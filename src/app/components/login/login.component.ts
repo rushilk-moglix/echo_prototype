@@ -1,20 +1,20 @@
 import { Component, inject, signal } from '@angular/core';
+import { EchoMarkComponent } from '../echo-mark/echo-mark.component';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { ApiService } from '../../services/api.service';
-import { IconComponent } from '../icon/icon.component';
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, IconComponent],
+  imports: [EchoMarkComponent, FormsModule],
   template: `
     <div class="gate">
       <form class="gate-card" (ngSubmit)="submit()">
         <div class="sb-brand" style="--sb-ink: var(--ds-text); --sb-mute: var(--ds-text-muted)">
-          <span class="sb-mark"><app-icon name="echo" [size]="18"></app-icon></span>
+          <app-echo-mark mode="intro" [size]="44"></app-echo-mark>
           <span class="sb-txt" style="opacity: 1"><b>Echo</b><small>by Vanik</small></span>
         </div>
         @if (demo) { <div class="note" style="margin-top: 12px">Demo with sample data. Sign in with any email and password.</div> }

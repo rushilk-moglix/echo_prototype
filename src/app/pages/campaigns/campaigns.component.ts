@@ -1,10 +1,12 @@
 import { campaignStatus, GROUPS, groupLabel } from '../../utils/status';
 import { ConfirmComponent } from '../../components/confirm/confirm.component';
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
+import { EchoLoaderComponent, EchoMarkComponent } from '../../components/echo-mark/echo-mark.component';
 import { CampaignNamePipe } from '../../pipes/campaign-name.pipe';
 import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
+import { AuthService } from '../../services/auth.service';
 import { IconComponent } from '../../components/icon/icon.component';
 import { fmtTime } from '../../utils/format';
 import { NewCampaignComponent } from './new-campaign.component';
@@ -12,11 +14,12 @@ import { NewCampaignComponent } from './new-campaign.component';
 @Component({
   selector: 'app-campaigns',
   standalone: true,
-  imports: [CampaignNamePipe, FormsModule, IconComponent, ConfirmComponent, RouterLink, NewCampaignComponent],
+  imports: [EchoLoaderComponent, EchoMarkComponent, CampaignNamePipe, FormsModule, IconComponent, ConfirmComponent, RouterLink, NewCampaignComponent],
   templateUrl: './campaigns.component.html',
 })
 export class CampaignsComponent implements OnInit {
   api = inject(ApiService);
+  auth = inject(AuthService);
   router = inject(Router);
 
   COLS = 'minmax(180px, 1.4fr) minmax(140px, 1fr) minmax(170px, 1.2fr) minmax(150px, max-content) 110px 140px 104px';

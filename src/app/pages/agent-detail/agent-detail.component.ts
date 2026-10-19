@@ -1,4 +1,5 @@
 import { Component, inject, signal, computed, OnInit, OnDestroy, HostListener } from '@angular/core';
+import { EchoLoaderComponent } from '../../components/echo-mark/echo-mark.component';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { EnginePanelComponent } from '../../components/engine-panel/engine-panel.component';
 import { StatusPickerComponent } from '../../components/status-picker/status-picker.component';
@@ -14,6 +15,7 @@ import { mergeFieldLines } from '../../utils/merge-fields';
 import { toDoc, fromDoc } from '../../utils/prompt-doc';
 import { fmtAgo } from '../../utils/format';
 import { CALL_STATUSES, statusHover } from '../../utils/status';
+import { CreditsService } from '../../services/credits.service';
 
 const IN_COLS = '1.4fr 130px 130px 1.4fr 90px 36px';
 const OUT_COLS = '1fr 1fr 110px 1.2fr 1.4fr 50px 36px';
@@ -56,7 +58,7 @@ const blankLookup = () => ({ name: '', when: 'before', url: '', send: [] as stri
 @Component({
   selector: 'app-agent-detail',
   standalone: true,
-  imports: [FormsModule, RouterLink, EnginePanelComponent, StatusPickerComponent, IconComponent, PromptPreviewComponent, ConfirmComponent, GuideComponent, HintComponent],
+  imports: [EchoLoaderComponent, FormsModule, RouterLink, EnginePanelComponent, StatusPickerComponent, IconComponent, PromptPreviewComponent, ConfirmComponent, GuideComponent, HintComponent],
   templateUrl: './agent-detail.component.html',
 })
 export class AgentDetailComponent implements OnInit, OnDestroy {
@@ -298,6 +300,7 @@ export class AgentDetailComponent implements OnInit, OnDestroy {
 
   async save(): Promise<void> {
     if (this.busy()) return;
+    this.aiDone.set([]);
     const parts = this.changes();
     if (!parts.length) return;
     const d = this.draft();
@@ -330,6 +333,7 @@ export class AgentDetailComponent implements OnInit, OnDestroy {
   }
 
   discard(): void {
+    this.aiDone.set([]);
     const was = JSON.parse(this.saved());
     this.sections.set(was.sections);
     this.inputs.set(was.inputs);
@@ -585,6 +589,24 @@ export class AgentDetailComponent implements OnInit, OnDestroy {
   async removeReference(id: string): Promise<void> {
     try { const r = await this.api.removeAgentReference(this.key, id); this.references.set(r.agent.references); }
     catch (e: any) { this.error.set(e.message); }
+  }
+
+  // ── Change with AI ────────────────────────────────────────────────────────
+  private credits = inject(CreditsService);
+  aiAsk = signal('');
+  aiBusy = signal(false);
+  aiDone = signal<string[]>([]);
+  aiCost = computed(() => this.credits.price('ai_edit') || 10);
+  /** Sends the instruction with the current draft; the changed parts come back into the draft, unsaved. */
+  async askAi(): Promise<void> {
+    const instruction = this.aiAsk().trim(); if (!instruction || this.aiBusy()) return;
+    this.aiBusy.set(true); this.error.set('');
+    try {
+      const r = await this.api.aiEditAgent(this.key, { instruction, sections: this.sections(), outputs: this.outputs(), inputs: this.inputs() });
+      this.sections.set(r.sections); this.outputs.set(r.outputs); this.inputs.set(r.inputs); this.doc.set(toDoc(r.sections));
+      this.aiDone.set((r.changes || []).map((c: any) => c.text)); this.aiAsk.set(''); this.credits.refresh();
+    } catch (e: any) { this.error.set(e.message); }
+    finally { this.aiBusy.set(false); }
   }
 
   private say(msg: string): void {

@@ -1,5 +1,6 @@
 import { HintComponent } from '../../components/hint/hint.component';
 import { Component, inject, signal, OnInit, OnDestroy, ViewChild, ElementRef } from '@angular/core';
+import { EchoMarkComponent } from '../../components/echo-mark/echo-mark.component';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../services/api.service';
 import { AudioService, TranscriptEntry, SessionEvent } from '../../services/audio.service';
@@ -12,7 +13,7 @@ import { EnginePanelComponent, EngineConfig, DEFAULT_ENGINE } from '../../compon
 @Component({
   selector: 'app-call-console',
   standalone: true,
-  imports: [HintComponent, FormsModule, IconComponent, RecordingComponent, EnginePanelComponent],
+  imports: [EchoMarkComponent, HintComponent, FormsModule, IconComponent, RecordingComponent, EnginePanelComponent],
   templateUrl: './call-console.component.html',
 })
 export class CallConsoleComponent implements OnInit, OnDestroy {

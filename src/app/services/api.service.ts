@@ -369,6 +369,35 @@ export class ApiService {
     return body;
   }
 
+  // ── Credits, requests and numbers ──────────────────────────────────────────
+
+  credits(orgId: string): Promise<any> { return this.getJSON(ENDPOINTS.org.credits(orgId)); }
+  buyCredits(orgId: string, pack: string, method: string): Promise<any> { return this.sendJSON(ENDPOINTS.org.buyCredits(orgId), 'POST', { pack, method }); }
+  setAutoTopup(orgId: string, body: { on: boolean; pack: string; below: number }): Promise<any> { return this.sendJSON(ENDPOINTS.org.autoTopup(orgId), 'PUT', body); }
+  spendCredits(orgId: string, body: { kind: string; label: string; credits?: number; ref?: string }): Promise<any> { return this.sendJSON(ENDPOINTS.org.spend(orgId), 'POST', body); }
+  createRequest(orgId: string, body: { kind: string; title: string; details: string }): Promise<any> { return this.sendJSON(ENDPOINTS.org.requests(orgId), 'POST', body); }
+  acceptRequest(orgId: string, id: string): Promise<any> { return this.sendJSON(ENDPOINTS.org.acceptRequest(orgId, id), 'POST', {}); }
+  cancelRequest(orgId: string, id: string): Promise<any> { return this.sendJSON(ENDPOINTS.org.cancelRequest(orgId, id), 'POST', {}); }
+  updateRequest(orgId: string, id: string, body: any): Promise<any> { return this.sendJSON(ENDPOINTS.org.request(orgId, id), 'PATCH', body); }
+  availableNumbers(): Promise<any> { return this.getJSON(ENDPOINTS.numbersAvailable); }
+  buyNumber(orgId: string, number: string): Promise<any> { return this.sendJSON(ENDPOINTS.org.numbers(orgId), 'POST', { number }); }
+
+  // ── Build and change agents with AI ────────────────────────────────────────
+
+  /** Files go as file_0..n with an optional kind_n the person picked. */
+  async builderAnalyze(prompt: string, pack: string, files: { file: File; kind?: string }[]): Promise<any> {
+    const form = new FormData();
+    form.append('prompt', prompt); form.append('pack', pack);
+    files.forEach((f, i) => { form.append(`file_${i}`, f.file, f.file.name); if (f.kind) form.append(`kind_${i}`, f.kind); });
+    const res = await fetch(this.apiUrl(ENDPOINTS.builder.analyze), { method: 'POST', body: form });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) { this.checkUnauthorized(res); throw new Error(body.error || `HTTP ${res.status}`); }
+    return body;
+  }
+  builderAnswers(session: string, answers: Record<string, any>): Promise<any> { return this.sendJSON(ENDPOINTS.builder.answers(session), 'POST', { answers }); }
+  builderCreate(session: string, label: string): Promise<any> { return this.sendJSON(ENDPOINTS.builder.create(session), 'POST', { label }); }
+  aiEditAgent(key: string, body: { instruction: string; sections?: any[]; outputs?: any[]; inputs?: any[] }): Promise<any> { return this.sendJSON(ENDPOINTS.agents.aiEdit(key), 'POST', body); }
+
   // ── Telephony ──────────────────────────────────────────────────────────────
 
   ozonetelCampaigns(outboundOnly = true): Promise<any> {

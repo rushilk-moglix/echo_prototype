@@ -68,6 +68,17 @@ export const ENDPOINTS = {
     integration: (orgId: string, key: string) => `/api/orgs/${seg(orgId)}/integrations/${seg(key)}`,
     integrationCheck: (orgId: string, key: string) => `/api/orgs/${seg(orgId)}/integrations/${seg(key)}/check`,
     flows: (orgId: string) => `/api/orgs/${seg(orgId)}/telephony/flows`,
+    /** The workspace's credit wallet: balance, prices, packs, history, requests and numbers. */
+    credits: (orgId: string) => `/api/orgs/${seg(orgId)}/credits`,
+    buyCredits: (orgId: string) => `/api/orgs/${seg(orgId)}/credits/buy`,
+    autoTopup: (orgId: string) => `/api/orgs/${seg(orgId)}/credits/auto-topup`,
+    spend: (orgId: string) => `/api/orgs/${seg(orgId)}/credits/spend`,
+    /** Work done by the Vanik team: custom agents and integrations, quoted then accepted. */
+    requests: (orgId: string) => `/api/orgs/${seg(orgId)}/requests`,
+    request: (orgId: string, id: string) => `/api/orgs/${seg(orgId)}/requests/${seg(id)}`,
+    acceptRequest: (orgId: string, id: string) => `/api/orgs/${seg(orgId)}/requests/${seg(id)}/accept`,
+    cancelRequest: (orgId: string, id: string) => `/api/orgs/${seg(orgId)}/requests/${seg(id)}/cancel`,
+    numbers: (orgId: string) => `/api/orgs/${seg(orgId)}/numbers`,
     flow: (orgId: string, name: string) => `/api/orgs/${seg(orgId)}/telephony/flows/${seg(name)}`,
     fetchFlows: (orgId: string, provider: string) => `/api/orgs/${seg(orgId)}/telephony/${seg(provider)}/fetch`,
     dataPolicy: (orgId: string) => `/api/orgs/${seg(orgId)}/data-policy`,
@@ -133,7 +144,17 @@ export const ENDPOINTS = {
     /** Arms the agent for the sync poller — permanent once it succeeds, no
      * unsync/switch action exists. */
     sync: (key: string) => `/api/agents/${seg(key)}/sync`,
+    /** Change an agent by describing the change; returns the changed parts for review. */
+    aiEdit: (key: string) => `/api/agents/${seg(key)}/ai-edit`,
   },
+
+  /** Build an agent with AI from files and a sentence: read, ask, create. */
+  builder: {
+    analyze: '/api/ai/agent-builder/analyze',
+    answers: (id: string) => `/api/ai/agent-builder/${seg(id)}/answers`,
+    create: (id: string) => `/api/ai/agent-builder/${seg(id)}/create`,
+  },
+  numbersAvailable: '/api/numbers/available',
 
   campaigns: {
     list: '/api/campaigns',

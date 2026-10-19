@@ -1,4 +1,5 @@
 import { Component, inject, computed, signal, OnInit } from '@angular/core';
+import { EchoLoaderComponent } from '../../components/echo-mark/echo-mark.component';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { NgTemplateOutlet } from '@angular/common';
@@ -9,6 +10,8 @@ import { StatusReferenceComponent } from '../../components/status-reference/stat
 import { ConnectComponent } from '../../components/connect/connect.component';
 import { StatusPickerComponent } from '../../components/status-picker/status-picker.component';
 import { IntegrationCatalogComponent } from '../../components/integration-catalog/integration-catalog.component';
+import { BuyNumberComponent } from '../../components/buy-number/buy-number.component';
+import { RequestWorkComponent } from '../../components/request-work/request-work.component';
 import { ConfirmComponent } from '../../components/confirm/confirm.component';
 import { HealthService } from '../../services/health.service';
 import { AuthService } from '../../services/auth.service';
@@ -36,7 +39,7 @@ const PAGE = 40;
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [IconComponent, FormsModule, RouterLink, NgTemplateOutlet, HintComponent, GuideComponent, StatusReferenceComponent, ConnectComponent, ConfirmComponent, IntegrationCatalogComponent, StatusPickerComponent],
+  imports: [EchoLoaderComponent, IconComponent, FormsModule, RouterLink, NgTemplateOutlet, HintComponent, GuideComponent, StatusReferenceComponent, ConnectComponent, ConfirmComponent, IntegrationCatalogComponent, StatusPickerComponent, BuyNumberComponent, RequestWorkComponent],
   template: `
     <div class="page">
       <div class="page-head agent-head">
@@ -95,7 +98,10 @@ const PAGE = 40;
               <section class="set-sec">
                 <div class="set-head">
                   <div class="set-title">Providers <app-hint text="The services that place your calls. Set one up, Echo checks it works, then it can be turned off or removed at any time."></app-hint></div>
-                  <button class="btn btn-sm" [disabled]="!isOrgAdmin()" (click)="openCatalog('telephony')"><app-icon name="plus" [size]="12"></app-icon> Add provider</button>
+                  <span class="set-acts">
+                    <button class="btn btn-sm" [disabled]="!isOrgAdmin()" (click)="buyingNumber.set(true)" title="Rent a number with credits; no provider account needed"><app-icon name="sim" [size]="12"></app-icon> Get a number</button>
+                    <button class="btn btn-sm" [disabled]="!isOrgAdmin()" (click)="openCatalog('telephony')"><app-icon name="plus" [size]="12"></app-icon> Add provider</button>
+                  </span>
                 </div>
                 <ng-container *ngTemplateOutlet="intList; context: { $implicit: setUp(telephonyInts()), empty: 'No provider yet. Add one to start calling.' }"></ng-container>
               </section>
@@ -225,7 +231,10 @@ const PAGE = 40;
                 <div class="set-head">
                   <div class="set-title">Connected <app-guide topic="destination"></app-guide></div>
                   <span class="row-sub">{{ otherInts().length }} available</span>
-                  <button class="btn btn-sm btn-primary" [disabled]="!isOrgAdmin()" (click)="openCatalog('')"><app-icon name="plus" [size]="12"></app-icon> Add integration</button>
+                  <span class="set-acts">
+                    <button class="btn btn-sm" [disabled]="!isOrgAdmin()" (click)="requestingInt.set(true)" title="Our team builds it, for example ERP write back"><app-icon name="wrench" [size]="12"></app-icon> Request a custom one</button>
+                    <button class="btn btn-sm btn-primary" [disabled]="!isOrgAdmin()" (click)="openCatalog('')"><app-icon name="plus" [size]="12"></app-icon> Add integration</button>
+                  </span>
                 </div>
                 <ng-container *ngTemplateOutlet="intList; context: { $implicit: setUp(otherInts()), empty: 'Nothing connected yet. Add a CRM, sheet, helpdesk, database, webhook or your own model keys.' }"></ng-container>
               </section>
@@ -242,7 +251,7 @@ const PAGE = 40;
               </div>
             </div>
           }
-        } @else { <div class="card-body row-sub">Loading…</div> }
+        } @else { <app-echo-loader label="Loading settings"></app-echo-loader> }
       </div>
     </div>
 
@@ -290,6 +299,9 @@ const PAGE = 40;
     }
     @if (setup(); as it) {
       <app-connect [item]="it" [orgId]="org()" (close)="setup.set(null)" (saved)="onSaved($event)"></app-connect>
+    }
+    @if (buyingNumber()) { <app-buy-number (closed)="buyingNumber.set(false)"></app-buy-number> }
+    @if (requestingInt()) { <app-request-work initialKind="custom_integration" (closed)="requestingInt.set(false)"></app-request-work>
     }
     @if (askRemove(); as it) {
       <app-confirm [title]="'Remove ' + it.label + '?'" [body]="removeWords(it)" confirmLabel="Remove" [danger]="true" [busy]="removing()" (confirm)="remove(it)" (cancel)="askRemove.set(null)"></app-confirm>
@@ -380,6 +392,8 @@ export class SettingsComponent implements OnInit {
   initials(n: string): string { return n.replace(/[^A-Za-z0-9 ]/g, '').split(' ').filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase(); }
   tint(n: string): string { const pal = ['#d9232d', '#3d33a0', '#2a6247', '#9a5b0b', '#4a4540', '#a3121a', '#5a51c0', '#2e7d57']; let h = 0; for (const ch of n) h = (h * 31 + ch.charCodeAt(0)) >>> 0; return pal[h % pal.length]; }
   setup = signal<any>(null);
+  buyingNumber = signal(false);
+  requestingInt = signal(false);
   askRemove = signal<any>(null);
   removing = signal(false);
   menuFor = signal('');

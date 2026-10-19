@@ -1,0 +1,2 @@
+CREATE TABLE purchase_orders (po_number varchar(20) primary key, supplier_code varchar(10), status varchar(20), buyer varchar(40));
+CREATE TABLE po_lines (po_number varchar(20), line_no int, material varchar(80), open_qty int, promised_date date);
