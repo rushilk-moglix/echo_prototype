@@ -6,8 +6,8 @@
  */
 import { GROUPS } from './status';
 
-const INK = '#0c0a09', MUTED = '#5c5752', FAINT = '#a8a29e', LINE = '#e7e5e2', WELL = '#f0eee9', ACCENT = '#da291c';
-const GROUP_COLOR: Record<string, string> = { reached: '#16a34a', not_reached: '#da291c', failed: '#e28a0b', in_progress: '#6b62d6', not_dialled: '#a8a29e' };
+const INK = '#0c0a09', MUTED = '#5c5752', FAINT = '#a8a29e', LINE = '#e7e5e2', WELL = '#f0eee9', ACCENT = '#047857';
+const GROUP_COLOR: Record<string, string> = { reached: '#16a34a', not_reached: '#dc2626', failed: '#e28a0b', in_progress: '#6b62d6', not_dialled: '#a8a29e' };
 const FONT = "'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif";
 const pct = (a: number, b: number) => (b ? Math.round((a / b) * 100) : 0);
 
@@ -92,7 +92,7 @@ export function drawReportCard(x: ReportCardInput): HTMLCanvasElement {
   if (more > 0) text(`and ${more} more in the spreadsheet`, P, ty + 100 + rows.length * 52 + 4, 17, FAINT);
 
   g.fillStyle = LINE; g.fillRect(P, H - 92, bw, 2);
-  text('Echo by Cognilix', P, H - 50, 20, INK, 600);
+  text('Echo by Vanik', P, H - 50, 20, INK, 600);
   text(`Made ${new Date(x.summary.generated_at || Date.now()).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false })}`, W - P, H - 50, 18, MUTED, 400, 'right');
   return c;
 }

@@ -45,7 +45,7 @@ const NAV = [
         <div class="sb-top">
           <a routerLink="/overview" class="sb-brand" aria-label="Echo home">
             <span class="sb-mark"><app-icon name="echo" [size]="18"></app-icon></span>
-            <span class="sb-txt"><b>Echo</b><small>by Cognilix</small></span>
+            <span class="sb-txt"><b>Echo</b><small>by Vanik</small></span>
           </a>
         </div>
 

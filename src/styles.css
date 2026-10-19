@@ -5,16 +5,17 @@
    ----------------------------------------------------------------------------
    Components keep their short names (--ink, --card, --red...), but every one
    now points at a semantic token, so light and dark come from one place and
-   Echo and Clarix stay in step. Echo's accent is PANTONE 485 C (#DA291C).
+   Echo and Clarix stay in step. Echo is a Vanik product: its accent is Vanik emerald
+   (deep #047857 on light surfaces, electric #10B981 on dark), per the Vanik brand review.
    ========================================================================== */
 :root {
-  --ds-accent: #da291c; --ds-accent-hover: #b51f13; --ds-accent-fg: #b51f13;
-  --ds-accent-soft: #fdeeec; --ds-accent-border: #f6c9c4; --ds-on-accent: #ffffff; --ds-focus: #da291c;
+  --ds-accent: #047857; --ds-accent-hover: #065f46; --ds-accent-fg: #047857;
+  --ds-accent-soft: #ecfdf5; --ds-accent-border: #a7f3d0; --ds-on-accent: #ffffff; --ds-focus: #047857;
 }
 :root[data-theme="dark"] {
-  /* Buttons keep white text on red in both themes; red used as text on dark surfaces is the lighter accent-fg. */
-  --ds-accent: #da291c; --ds-accent-hover: #ee3a2c; --ds-accent-fg: #ff8b80;
-  --ds-accent-soft: rgba(218, 41, 28, 0.16); --ds-accent-border: rgba(238, 70, 56, 0.4); --ds-on-accent: #ffffff; --ds-focus: #ff8b80;
+  /* Buttons keep white text on deep emerald in both themes; emerald used as text on dark surfaces is the electric accent-fg. */
+  --ds-accent: #047857; --ds-accent-hover: #059669; --ds-accent-fg: #34d399;
+  --ds-accent-soft: rgba(16, 185, 129, 0.16); --ds-accent-border: rgba(16, 185, 129, 0.4); --ds-on-accent: #ffffff; --ds-focus: #34d399;
 }
 :root {
   /* Surfaces */
@@ -2626,7 +2627,7 @@ code, kbd, samp, pre { font-family: var(--ds-mono); }
   .shell, .shell > .main { position: static !important; height: auto !important; overflow: visible !important; inset: auto !important; }
   .page > :not(.print-report) { display: none !important; }
   .print-report { display: block; color: #0c0a09; font-family: var(--ds-font); }
-  .print-report header { border-left: 4px solid #da291c; padding-left: 12px; margin-bottom: 16px; }
+  .print-report header { border-left: 4px solid #047857; padding-left: 12px; margin-bottom: 16px; }
   .print-report h1 { font-size: 22px; margin: 0; letter-spacing: -0.02em; } .print-report header p { margin: 3px 0 0; color: #5c5752; font-size: 12px; }
   .print-report h2 { font-size: 13px; margin: 18px 0 6px; }
   .pr-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
@@ -2720,3 +2721,70 @@ code, kbd, samp, pre { font-family: var(--ds-mono); }
 .st-chip.rw-not_reached i, .st-chip.rw-skipped i { background: var(--ds-text-muted); }
 .skip-rule { display: flex; gap: 6px; align-items: center; margin: 6px 0; flex-wrap: wrap; }
 .skip-rule .select, .skip-rule .input { width: auto; min-width: 120px; }
+
+/* ── Tables: one look for every board ─────────────────────────────────────── */
+.table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: var(--ds-fs-base); }
+.table th { position: sticky; top: 0; z-index: 1; text-align: left; white-space: nowrap; font-size: var(--ds-fs-sm); font-weight: 600; color: var(--ds-text-muted); background: var(--ds-surface-sunken); padding: 9px 12px; border-bottom: 1px solid var(--ds-border); }
+.table td { padding: 10px 12px; border-bottom: 1px solid var(--ds-border-subtle); color: var(--ds-text); vertical-align: middle; }
+.table tbody tr:last-child td { border-bottom: 0; }
+.table .num { text-align: right; }
+
+/* ── Campaign stats: progress, facts, one tile per call status ─────────────── */
+.cs { padding: 14px 16px 16px; display: grid; gap: 12px; }
+.cs-top { display: flex; align-items: center; justify-content: space-between; gap: 10px 24px; flex-wrap: wrap; }
+.cs-done { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; color: var(--ds-text-muted); }
+.cs-done b { font-size: 24px; color: var(--ds-text); font-variant-numeric: tabular-nums; }
+.cs-facts { display: flex; gap: 28px; margin: 0; flex-wrap: wrap; }
+.cs-facts div { display: grid; gap: 2px; }
+.cs-facts dt { font-size: var(--ds-fs-xs); color: var(--ds-text-muted); display: flex; align-items: center; gap: 2px; }
+.cs-facts dd { margin: 0; font-size: 16px; font-weight: 650; color: var(--ds-text); font-variant-numeric: tabular-nums; }
+.cs-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; align-items: stretch; }
+.cs-tile { display: grid; gap: 2px; text-align: left; padding: 10px 12px; border: 1px solid var(--ds-border); border-radius: var(--ds-r-lg); background: var(--ds-surface); font: inherit; cursor: pointer; min-width: 0; }
+.cs-tile:hover { border-color: var(--ds-border-strong); background: var(--ds-hover); }
+.cs-tile.on { border-color: var(--ds-text); box-shadow: inset 0 0 0 1px var(--ds-text); }
+.cs-tile:focus-visible { outline: 2px solid var(--ds-focus); outline-offset: 2px; }
+.cs-n { font-size: 22px; font-weight: 700; color: var(--ds-text); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.cs-l { display: flex; align-items: center; gap: 6px; font-size: var(--ds-fs-sm); color: var(--ds-text-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cs-l i { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--ds-text-disabled); }
+.cs-p { font-size: var(--ds-fs-xs); color: var(--ds-text-muted); font-variant-numeric: tabular-nums; }
+.cs-tile.st-reached .cs-l i { background: var(--ds-success); } .cs-tile.st-not_reached .cs-l i { background: var(--ds-danger); }
+.cs-tile.st-failed .cs-l i { background: var(--ds-warning); } .cs-tile.st-in_progress .cs-l i { background: var(--ds-info); }
+.cs-ref { display: flex; align-items: center; justify-content: flex-start; padding: 0 4px; }
+
+/* ── Board: Calls and Rows, one search, export ─────────────────────────────── */
+.board { display: flex; flex-direction: column; min-width: 0; }
+.board-head { justify-content: flex-start; }
+.board-tabs { display: flex; align-items: center; gap: 4px; margin-right: auto; }
+.board-tabs .tab { display: inline-flex; align-items: center; gap: 6px; font-size: var(--ds-fs-md); }
+.board-search { position: relative; flex: 0 1 300px; min-width: 160px; }
+.board-search input { width: 100%; padding-left: 30px; }
+.board-search app-icon { position: absolute; left: 9px; top: 50%; transform: translateY(-50%); color: var(--faint); }
+.board-n { white-space: nowrap; }
+.board .scroll-x { max-height: calc(100vh - 220px); overflow: auto; }
+.rt-say { color: var(--ds-text); max-width: 420px; }
+.rt-who { white-space: nowrap; }
+.rt-ans { background: color-mix(in srgb, var(--ds-surface-sunken) 45%, transparent); white-space: nowrap; }
+.table th.rt-ans { background: var(--ds-surface-sunken); }
+.rt-go { width: 28px; color: var(--faint); text-align: right; }
+
+/* Status meaning never follows the brand accent. */
+.g-not_reached { background: var(--ds-danger); }
+.st-chip.st-not_reached i { background: var(--ds-danger); }
+
+/* Phones: every board row becomes a card with its labels. */
+@media (max-width: 760px) {
+  .page { padding: 14px; }
+  .board-head { gap: 8px; }
+  .board-tabs { width: 100%; }
+  .board-search { flex: 1 1 100%; }
+  .board .scroll-x { max-height: none; }
+  .table.rt thead { display: none; }
+  .table.rt, .table.rt tbody, .table.rt tr, .table.rt td { display: block; width: 100%; }
+  .table.rt tr { padding: 10px 14px; border-bottom: 1px solid var(--ds-border); position: relative; }
+  .table.rt td { border: 0; padding: 3px 0; display: grid; grid-template-columns: 110px minmax(0, 1fr); gap: 2px 8px; text-align: left !important; background: none; white-space: normal; max-width: none; }
+  .table.rt td[data-label]::before { content: attr(data-label); grid-column: 1; grid-row: 1; font-size: var(--ds-fs-xs); color: var(--ds-text-muted); padding-top: 2px; }
+  .table.rt td[data-label] > * { grid-column: 2; justify-self: start; }
+  .table.rt td:not([data-label]) { display: flex; justify-content: flex-end; gap: 4px; padding-top: 6px; }
+  .cs-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cs-facts { gap: 18px; }
+}

@@ -6,7 +6,6 @@ import { CampaignNamePipe } from '../../pipes/campaign-name.pipe';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ApiService } from '../../services/api.service';
 import { IconComponent } from '../../components/icon/icon.component';
-import { ResponsesTableComponent } from './responses-table.component';
 import { ContactsBrowserComponent } from './contacts-browser.component';
 import { ColumnMappingComponent } from './column-mapping.component';
 import { FormsModule } from '@angular/forms';
@@ -18,7 +17,7 @@ import { fmtSecs } from '../../utils/format';
 @Component({
   selector: 'app-campaign-detail',
   standalone: true,
-  imports: [CampaignNamePipe, RouterLink, FormsModule, GuideComponent, HintComponent, StatusReferenceComponent, IconComponent, ResponsesTableComponent, ContactsBrowserComponent, ColumnMappingComponent, ConfirmComponent, StatRowComponent],
+  imports: [CampaignNamePipe, RouterLink, FormsModule, GuideComponent, HintComponent, StatusReferenceComponent, IconComponent, ContactsBrowserComponent, ColumnMappingComponent, ConfirmComponent, StatRowComponent],
   templateUrl: './campaign-detail.component.html',
 })
 export class CampaignDetailComponent implements OnInit, OnDestroy {
@@ -32,7 +31,8 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   stats = signal<any>(null);
   statScope = signal<Record<string, string>>({});
   campaign = signal<any>(null);
-  tab = signal<'responses' | 'contacts' | 'rows'>('contacts');
+  /** The board has two tabs: Calls (one line per call) and Rows (one line per row of the file). */
+  tab = signal<'contacts' | 'rows'>('contacts');
   /** Every uploaded row with its own state. A call that went well can still leave a row open, so rows are listed on their own. */
   rowData = signal<any>(null);
   rowState = signal('');
@@ -42,7 +42,39 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
   rowTone(state: string): string { return state === 'answered' ? 'ok' : state === 'rejected' ? 'bad' : state === 'not_covered' || state === 'partly' ? 'warn' : state === 'waiting' ? 'busy' : 'muted'; }
   rowAnswer(r: any): string { const a = r.answer || {}; const f = (this.rowData()?.answer_fields || []).filter((k: string) => a[k] !== '' && a[k] != null).slice(0, 3); return f.map((k: string) => String(a[k]).replace(/_/g, ' ')).join(' · '); }
   mmss(s: number): string { return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
-  private rowsOpened = false;
+  /** Answer fields that hold at least one answer, one column each on the Rows board. */
+  answerFields = computed(() => { const d = this.rowData(); const rows = d?.rows || []; return (d?.answer_fields || []).filter((f: string) => f !== 'row' && rows.some((r: any) => !this.blank(r.answer?.[f]))); });
+  nice(k: string): string { return String(k).replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()); }
+  blank(v: any): boolean { return v === null || v === undefined || v === ''; }
+  show(v: any): string { return v === true ? 'Yes' : v === false ? 'No' : this.blank(v) ? '—' : String(v).replace(/_/g, ' '); }
+  /** Each call's saved answers, by contact id, for the Calls board and its export. */
+  answersById = computed(() => { const m: Record<string, any> = {}; for (const r of this.responses()) m[r.primary_id] = r; return m; });
+  pct(n: number): string { const t = this.contacts().length; return t ? `${Math.round((n / t) * 100)}%` : ''; }
+  /** A status tile filters the Calls board; picking it again shows every call. */
+  pickStatus(key: string): void { this.tab.set('contacts'); this.outcomeFilter.set(this.outcomeFilter() === key ? '' : key); }
+  filterLabel = computed(() => (this.outcomeFilter() ? outcomeView(this.outcomeFilter()).label : ''));
+  shownCount = computed(() => (this.tab() === 'rows' ? this.shownRows().length : this.shownContacts().length));
+
+  /** Download exactly what the board shows, with every answer, as a CSV that opens in Excel. */
+  exportBoard(): void {
+    const cell = (v: any) => { const s = v === null || v === undefined ? '' : String(v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+    let head: string[]; let body: any[][];
+    if (this.tab() === 'rows') {
+      const f = this.rowData()?.answer_fields?.filter((k: string) => k !== 'row') || [];
+      head = ['Row', 'What it is about', 'Row state', 'Why this state', ...f.map((k: string) => this.nice(k)), 'Contact', 'Phone', 'Call status'];
+      body = this.shownRows().map((r: any) => [r.row, r.say, r.state_label, r.reason, ...f.map((k: string) => this.show(r.answer?.[k]).replace(/^—$/, '')), r.contact, r.phone, r.call_status]);
+    } else {
+      const ov = this.outVars(); const by = this.answersById();
+      head = ['Name', 'Phone', ...(this.grouped() ? ['Rows answered', 'Rows'] : []), 'Call status', 'Dials', 'Talk (seconds)', 'Last dial', ...ov.map((v: any) => v.label || v.key), 'No answers because'];
+      body = this.shownContacts().map((r: any) => { const a = by[r.primary_id];
+        return [r.name, r.phone, ...(this.grouped() ? [r.rows_answered ?? 0, r.rows_count ?? ''] : []), outcomeView(r.outcome).label, r.attempts || 0, r.talk_seconds || 0, r.last_attempt_at || '', ...ov.map((v: any) => (a?.outputs?.[v.key] ?? '')), a?.no_answers?.label || '']; });
+    }
+    const csv = '﻿' + [head, ...body].map((row) => row.map(cell).join(',')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url; a.download = `${String(this.campaign()?.name || this.id).replace(/[^a-zA-Z0-9_-]+/g, '_')}-${this.tab() === 'rows' ? 'rows' : 'calls'}.csv`; a.click();
+    URL.revokeObjectURL(url);
+  }
   fmtSecs = fmtSecs;
   hover = statusHover;
   /** Long durations as "2 h 35 min"; short ones as m:ss. */
@@ -160,7 +192,7 @@ export class CampaignDetailComponent implements OnInit, OnDestroy {
       const c = await this.api.campaign(this.id);
       this.campaign.set(c);
       const [ct, rs] = await Promise.all([this.api.campaignContacts(this.id), this.api.campaignResponses(this.id)]);
-      this.api.campaignRows(this.id).then((d) => { this.rowData.set(d); if (d.grouped && !this.rowsOpened) { this.rowsOpened = true; this.tab.set('rows'); } }).catch(() => {});
+      this.api.campaignRows(this.id).then((d) => this.rowData.set(d)).catch(() => {});
       this.statScope.set({ days: '3650', campaign_id: this.id });
       this.api.reportSummary({ days: '3650', campaign_id: this.id }).then((r) => this.stats.set(r)).catch(() => {});
       this.contacts.set(ct.contacts || []);

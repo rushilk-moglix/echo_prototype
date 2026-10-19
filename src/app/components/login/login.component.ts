@@ -15,7 +15,7 @@ import { environment } from '../../../environments/environment';
       <form class="gate-card" (ngSubmit)="submit()">
         <div class="sb-brand" style="--sb-ink: var(--ds-text); --sb-mute: var(--ds-text-muted)">
           <span class="sb-mark"><app-icon name="echo" [size]="18"></app-icon></span>
-          <span class="sb-txt" style="opacity: 1"><b>Echo</b><small>by Cognilix</small></span>
+          <span class="sb-txt" style="opacity: 1"><b>Echo</b><small>by Vanik</small></span>
         </div>
         @if (demo) { <div class="note" style="margin-top: 12px">Demo with sample data. Sign in with any email and password.</div> }
         <div class="field" style="margin-top: 10px">

@@ -25,30 +25,39 @@ import { HintComponent } from '../../components/hint/hint.component';
       </div>
     } @else {
       <div class="scroll-x">
-        <table class="table ct">
+        <table class="table ct rt">
           <thead>
             <tr>
               <th>Contact</th>
               @if (grouped) { <th>Rows</th> }
-              <th>Call status</th><th class="num">Dials</th><th class="num">Talk</th><th>Last dial</th>
+              <th>Call status</th>
+              @if (showAnswers()) { <th class="ct-ans-h">Answers</th> }
+              <th class="num">Dials</th><th class="num">Talk</th><th>Last dial</th>
               <th class="ct-act-h"><span class="sr-only">Downloads</span></th>
             </tr>
           </thead>
           <tbody>
             @for (r of rows; track r.primary_id) {
               <tr class="ct-row" tabindex="0" (click)="open(r)" (keydown.enter)="open(r)" [title]="'Open the call page for ' + (r.name || r.phone)">
-                <td>
+                <td data-label="Contact">
                   <div class="ct-name">{{ r.name || '—' }}</div>
                   <div class="row-sub mono">{{ r.phone }}@if (r.parts > 1) { · call {{ r.part }} of {{ r.parts }} }</div>
                 </td>
-                @if (grouped) { <td class="mono" [title]="'Rows answered on this call, of the rows it was about'">{{ r.rows_answered ?? 0 }} of {{ r.rows_count }}</td> }
-                <td class="nowrap">
+                @if (grouped) { <td class="mono" data-label="Rows" [title]="'Rows answered on this call, of the rows it was about'">{{ r.rows_answered ?? 0 }} of {{ r.rows_count }}</td> }
+                <td class="nowrap" data-label="Call status">
                   <span [class]="'tag ct-status ' + ov(r).cls">{{ ov(r).label }}</span>
                   <span (click)="$event.stopPropagation()"><app-hint [text]="why(r)"></app-hint></span>
                 </td>
-                <td class="num mono">{{ r.attempts || 0 }}</td>
-                <td class="num mono">{{ r.talk_seconds ? fmtSecs(r.talk_seconds) : '—' }}</td>
-                <td class="mono row-sub">{{ r.last_attempt_at ? clock(r.last_attempt_at) : '—' }}</td>
+                @if (showAnswers()) {
+                  <td class="ct-ans" data-label="Answers">
+                    @if (answers[r.primary_id]?.no_answers; as na) { <span class="row-sub">No answers: {{ na.label }}</span> }
+                    @else if (answerLine(r); as line) { <span [title]="line">{{ line }}</span> }
+                    @else { <span class="row-sub">—</span> }
+                  </td>
+                }
+                <td class="num mono" data-label="Dials">{{ r.attempts || 0 }}</td>
+                <td class="num mono" data-label="Talk">{{ r.talk_seconds ? fmtSecs(r.talk_seconds) : '—' }}</td>
+                <td class="mono row-sub" data-label="Last dial">{{ r.last_attempt_at ? clock(r.last_attempt_at) : '—' }}</td>
                 <td class="ct-act" (click)="$event.stopPropagation()">
                   @if (r.call_id) {
                     <a class="icon-btn" [href]="api.callTranscriptUrl(r.call_id)" download title="Download transcript" aria-label="Download transcript"><app-icon name="transcript" [size]="15"></app-icon></a>
@@ -75,6 +84,8 @@ import { HintComponent } from '../../components/hint/hint.component';
     .ct-row:hover td, .ct-row:focus-visible td { background: var(--raised); }
     .ct-row:focus-visible { outline: 2px solid var(--red); outline-offset: -2px; }
     .ct-name { font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px; }
+    .ct-ans { max-width: 420px; color: var(--ink-2); }
+    .ct-ans span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
     .num { text-align: right; }
     .ct-status { font-size: 13px; font-weight: 600; }
     .ct-act-h { width: 96px; }
@@ -87,6 +98,16 @@ export class ContactsBrowserComponent {
   @Input() campaignId = '';
   @Input() grouped = false;
   @Input() filtered = false;
+  /** Saved answers by contact id, and the agent's answer fields, for the Answers column. */
+  @Input() answers: Record<string, any> = {};
+  @Input() outVars: any[] = [];
+  /** One line per call carries its answers; a grouped campaign shows them row by row on the Rows tab instead. */
+  showAnswers(): boolean { return !this.grouped && this.outVars.length > 0 && Object.keys(this.answers).length > 0; }
+  answerLine(r: any): string {
+    const o = this.answers[r.primary_id]?.outputs || {};
+    return this.outVars.filter((v) => o[v.key] !== '' && o[v.key] != null && !Array.isArray(o[v.key])).slice(0, 3)
+      .map((v) => `${v.label || v.key}: ${o[v.key] === true ? 'Yes' : o[v.key] === false ? 'No' : String(o[v.key]).replace(/_/g, ' ')}`).join(' · ');
+  }
 
   api = inject(ApiService);
   private router = inject(Router);

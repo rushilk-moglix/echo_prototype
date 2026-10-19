@@ -43,9 +43,6 @@ import { outcomeView, dialSentence, telephonyLine, statusHover } from '../../uti
             <button class="icon-btn" [disabled]="!contact().next" (click)="go(contact().next)" title="Next (j)" aria-label="Next contact"><app-icon name="chevronRight" [size]="15"></app-icon></button>
             <span class="cp-sep"></span>
           }
-          @if (callId()) {
-            <a class="icon-btn" [href]="api.callTranscriptUrl(callId())" download title="Download transcript" aria-label="Download transcript"><app-icon name="transcript" [size]="15"></app-icon></a>
-          }
           <button class="icon-btn" (click)="exportRecord()" title="Download the full record (JSON)" aria-label="Download the full record"><app-icon name="download" [size]="15"></app-icon></button>
         </div>
       </div>
@@ -90,21 +87,12 @@ import { outcomeView, dialSentence, telephonyLine, statusHover } from '../../uti
               @if (fromTranscript()) {
                 <div class="note cp-why"><b>Answers read from the transcript.</b> The caller hung up before the agent saved anything, so Echo read the call again and kept what it could.</div>
               }
-              @if (summary()) {
-                <div class="cp-sum" [class.open]="sumOpen()">
-                  <app-icon name="fileText" [size]="14"></app-icon>
-                  <div class="cp-sum-body">
-                    <p>{{ summary() }}</p>
-                    @if (sumOpen() && analysis()?.action_items?.length) {
-                      <ul>@for (x of analysis().action_items; track $index) { <li>{{ x }}</li> }</ul>
-                    }
-                  </div>
-                  <button class="btn-link" (click)="sumOpen.set(!sumOpen())">{{ sumOpen() ? 'Less' : 'More' }}</button>
-                </div>
-              }
               <div class="cp-tx-head">
                 <span class="card-title"><app-icon name="message" [size]="14"></app-icon> Transcript <span class="row-sub">· {{ messages().length }} turns · click a line to play it</span></span>
-                <button class="btn btn-sm" (click)="copyTranscript()"><app-icon name="copy" [size]="12"></app-icon> {{ copied() ? 'Copied' : 'Copy' }}</button>
+                <span class="cp-tx-acts">
+                  <button class="icon-btn" (click)="copyTranscript()" [title]="copied() ? 'Copied' : 'Copy transcript'" [attr.aria-label]="copied() ? 'Copied' : 'Copy transcript'"><app-icon [name]="copied() ? 'check' : 'copy'" [size]="14"></app-icon></button>
+                  <a class="icon-btn" [href]="api.callTranscriptUrl(callId())" download title="Download transcript" aria-label="Download transcript"><app-icon name="download" [size]="14"></app-icon></a>
+                </span>
               </div>
               <div class="cp-tx">
                 @if (!messages().length) {
@@ -133,6 +121,17 @@ import { outcomeView, dialSentence, telephonyLine, statusHover } from '../../uti
 
           <!-- Everything else in tabs, so the page stays one screen tall. -->
           <aside class="card cp-side">
+            @if (summary()) {
+              <!-- The executive summary leads the side, always open. -->
+              <div class="cp-exec">
+                <div class="cp-exec-h"><app-icon name="fileText" [size]="14"></app-icon> Executive summary</div>
+                <p>{{ summary() }}</p>
+                @if (analysis()?.action_items?.length) {
+                  <div class="cp-exec-h cp-exec-sub">Next steps</div>
+                  <ul>@for (x of analysis().action_items; track $index) { <li>{{ x }}</li> }</ul>
+                }
+              </div>
+            }
             <div class="seg-tabs" role="tablist" aria-label="Call details">
               @for (t of sideTabs(); track t.key) {
                 <button role="tab" type="button" [class]="'seg-tab' + (side() === t.key ? ' on' : '')" [attr.aria-selected]="side() === t.key" [attr.tabindex]="side() === t.key ? 0 : -1"
@@ -141,10 +140,40 @@ import { outcomeView, dialSentence, telephonyLine, statusHover } from '../../uti
             </div>
             <div class="cp-side-body">
               @switch (side()) {
-                @case ('answers') {
-                  @if (answerPairs().length) {
-                    <dl class="cp-kv">@for (kv of answerPairs(); track kv.key) { <dt>{{ kv.key }}</dt><dd>{{ kv.value }}</dd> }</dl>
-                  } @else { <div class="empty-sub cp-none">No answers on this call.</div> }
+                @case ('details') {
+                  <!-- One tab, read top to bottom: what went in, how the calling went, what came out. -->
+                  <section class="cp-sec">
+                    <h3 class="cp-sec-h">Input <app-hint text="The data this call was made with, from the uploaded row or the request."></app-hint></h3>
+                    @if (contextPairs().length) {
+                      <dl class="cp-kv">@for (kv of contextPairs(); track kv.key) { <dt>{{ nice(kv.key) }}</dt><dd>{{ kv.value }}</dd> }</dl>
+                    } @else { <div class="empty-sub cp-none">No input data on this call.</div> }
+                  </section>
+                  <section class="cp-sec">
+                    <h3 class="cp-sec-h">Calling summary <app-hint text="Every dial in order, with what the telephony service reported."></app-hint></h3>
+                    @if (contact()?.attempt_log?.length) {
+                      <ol class="cp-dials">
+                        @for (a of contact().attempt_log; track a.attempt) {
+                          <li>
+                            <span class="d-n mono">{{ a.attempt }}</span>
+                            <span class="d-body">
+                              <span class="d-top"><span [class]="'tag ' + outcomeView(a.outcome).cls">{{ outcomeView(a.outcome).label }}</span>
+                                @if (a.facts?.provider_disagrees) { <span class="tag warn" title="The telephony service said not answered, but Echo heard the caller">check</span> }
+                                <span class="mono row-sub">{{ clock(a.started_at) }}</span></span>
+                              <span class="row-sub">{{ dialSentence(a) }}</span>
+                            </span>
+                            <app-hint [text]="raw(a)"></app-hint>
+                          </li>
+                        }
+                      </ol>
+                      <div class="row-sub cp-retry">Tries follow the agent's retry rule <app-guide topic="retry"></app-guide></div>
+                    } @else { <div class="empty-sub cp-none">{{ sentence() }}</div> }
+                  </section>
+                  <section class="cp-sec">
+                    <h3 class="cp-sec-h">Output <app-hint text="The answers the agent saved on this call."></app-hint></h3>
+                    @if (answerPairs().length) {
+                      <dl class="cp-kv">@for (kv of answerPairs(); track kv.key) { <dt>{{ kv.key }}</dt><dd>{{ kv.value }}</dd> }</dl>
+                    } @else { <div class="empty-sub cp-none">{{ noAnswers()?.label ? 'No answers: ' + noAnswers().label : 'No answers on this call.' }}</div> }
+                  </section>
                 }
                 @case ('rows') {
                   <div class="scroll-x">
@@ -162,26 +191,6 @@ import { outcomeView, dialSentence, telephonyLine, statusHover } from '../../uti
                       </tbody>
                     </table>
                   </div>
-                }
-                @case ('dials') {
-                  <ol class="cp-dials">
-                    @for (a of contact().attempt_log; track a.attempt) {
-                      <li>
-                        <span class="d-n mono">{{ a.attempt }}</span>
-                        <span class="d-body">
-                          <span class="d-top"><span [class]="'tag ' + outcomeView(a.outcome).cls">{{ outcomeView(a.outcome).label }}</span>
-                            @if (a.facts?.provider_disagrees) { <span class="tag warn" title="The telephony service said not answered, but Echo heard the caller">check</span> }
-                            <span class="mono row-sub">{{ clock(a.started_at) }}</span></span>
-                          <span class="row-sub">{{ dialSentence(a) }}</span>
-                        </span>
-                        <app-hint [text]="raw(a)"></app-hint>
-                      </li>
-                    }
-                  </ol>
-                  <div class="row-sub cp-retry">Tries follow the agent's retry rule <app-guide topic="retry"></app-guide></div>
-                }
-                @case ('details') {
-                  <dl class="cp-kv">@for (kv of contextPairs(); track kv.key) { <dt>{{ nice(kv.key) }}</dt><dd>{{ kv.value }}</dd> }</dl>
                 }
               }
             </div>
@@ -209,14 +218,16 @@ import { outcomeView, dialSentence, telephonyLine, statusHover } from '../../uti
     .cp-main { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr); gap: 12px; align-items: start; }
     .cp-convo { display: flex; flex-direction: column; overflow: hidden; margin: 0; }
     .cp-player { padding: 12px 12px 8px; }
-    .cp-sum { display: flex; gap: 8px; align-items: flex-start; margin: 0 12px 8px; padding: 8px 10px; background: var(--raised); border-radius: 8px; font-size: 13px; color: var(--ink-2); }
-    .cp-sum app-icon { color: var(--muted); margin-top: 2px; }
-    .cp-sum-body { flex: 1; min-width: 0; }
-    .cp-sum p { margin: 0; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-    .cp-sum.open p { -webkit-line-clamp: unset; display: block; }
-    .cp-sum ul { margin: 6px 0 0; padding-left: 18px; }
-    .btn-link { border: 0; background: none; color: var(--muted); font-size: 12px; cursor: pointer; padding: 0; white-space: nowrap; }
-    .btn-link:hover { color: var(--ink); text-decoration: underline; }
+    .cp-exec { margin: 12px 12px 2px; padding: 10px 12px; background: var(--raised); border-radius: 10px; font-size: 13px; color: var(--ink-2); line-height: 1.55; }
+    .cp-exec-h { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 650; color: var(--ink); margin-bottom: 4px; }
+    .cp-exec-h app-icon { color: var(--muted); }
+    .cp-exec-sub { margin-top: 8px; }
+    .cp-exec p { margin: 0; }
+    .cp-exec ul { margin: 0; padding-left: 18px; }
+    .cp-sec { border-bottom: 1px solid var(--line-soft); padding-bottom: 4px; }
+    .cp-sec:last-child { border-bottom: 0; }
+    .cp-sec-h { display: flex; align-items: center; gap: 4px; margin: 0; padding: 12px 14px 2px; font-size: 12px; font-weight: 650; color: var(--ink); text-transform: uppercase; letter-spacing: 0.04em; }
+    .cp-tx-acts { display: flex; gap: 2px; }
     .cp-tx-head { display: flex; justify-content: space-between; align-items: center; padding: 6px 12px; border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
     .cp-tx { overflow: auto; max-height: calc(100vh - 330px); min-height: 240px; padding: 8px 6px; display: grid; gap: 2px; align-content: start; }
     .tx { display: grid; grid-template-columns: 92px minmax(0, 1fr); gap: 10px; text-align: left; border: 0; background: transparent; padding: 6px 8px; border-radius: 8px; cursor: pointer; font: inherit; color: var(--ink-2); }
@@ -226,8 +237,9 @@ import { outcomeView, dialSentence, telephonyLine, statusHover } from '../../uti
     .tx-agent .tx-meta b { color: var(--ds-speaker-agent); } .tx-caller .tx-meta b { color: var(--ds-speaker-caller); }
     .tx-text { font-size: 14px; line-height: 1.5; }
     .tx-tool { display: flex; gap: 6px; align-items: center; justify-content: center; font-size: 12px; color: var(--muted); padding: 4px; }
-    .cp-side { margin: 0; overflow: hidden; position: sticky; top: 0; }
-    .cp-side-body { max-height: calc(100vh - 230px); overflow: auto; }
+    .cp-side { margin: 0; overflow: hidden; position: sticky; top: 0; display: flex; flex-direction: column; max-height: calc(100vh - 150px); }
+    .cp-exec { flex: none; max-height: 38vh; overflow: auto; }
+    .cp-side-body { flex: 1; min-height: 0; overflow: auto; }
     .cp-kv { display: grid; grid-template-columns: minmax(110px, 40%) minmax(0, 1fr); margin: 0; padding: 6px 14px 12px; font-size: 13px; }
     .cp-kv dt, .cp-kv dd { margin: 0; padding: 7px 0; border-bottom: 1px solid var(--line-soft); }
     .cp-kv dt { color: var(--muted); padding-right: 10px; }
@@ -243,7 +255,8 @@ import { outcomeView, dialSentence, telephonyLine, statusHover } from '../../uti
     .cp-retry { padding: 8px 14px 12px; display: flex; align-items: center; }
     @media (max-width: 1000px) {
       .cp-main { grid-template-columns: minmax(0, 1fr); }
-      .cp-side { position: static; }
+      .cp-side { position: static; max-height: none; }
+      .cp-exec { max-height: none; }
       .cp-tx, .cp-side-body { max-height: none; }
       .cp-facts { margin-left: 0; }
     }
@@ -273,8 +286,7 @@ export class CallAnalysisComponent implements OnInit {
   lastProvider = computed(() => { const l = this.contact()?.attempt_log; return l?.length ? l[l.length - 1].provider : null; });
 
   @ViewChild('player') player?: PlayerComponent;
-  sumOpen = signal(false);
-  side = signal<'answers' | 'rows' | 'dials' | 'details'>('answers');
+  side = signal<'details' | 'rows'>('details');
   dialSentence = dialSentence;
   phone = computed(() => this.contact()?.contact?.phone || this.call()?.phone || '');
   summary = computed(() => this.analysis()?.executive_summary || this.call()?.summary || '');
@@ -282,14 +294,11 @@ export class CallAnalysisComponent implements OnInit {
   secs(s: number): string { return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; }
   noAnswers = computed(() => this.contact()?.no_answers || this.call()?.no_answers || null);
   fromTranscript = computed(() => (this.contact()?.answers_source || this.call()?.answers_source) === 'transcript');
-  /** Side tabs that have something to show; the first one opens. */
+  /** Two side tabs: Details (input, calling summary, output) and, when the call covers rows, Rows. */
   sideTabs = computed(() => {
     const c = this.contact();
-    const t: { key: 'answers' | 'rows' | 'dials' | 'details'; label: string; n: number | null }[] = [];
+    const t: { key: 'details' | 'rows'; label: string; n: number | null }[] = [{ key: 'details', label: 'Details', n: null }];
     if (c?.rows?.length) t.push({ key: 'rows', label: 'Rows', n: c.rows.length });
-    if (this.answerPairs().length || !c?.rows?.length) t.push({ key: 'answers', label: 'Answers', n: null });
-    if (c?.attempt_log?.length) t.push({ key: 'dials', label: 'Dials', n: c.attempt_log.length });
-    if (this.contextPairs().length) t.push({ key: 'details', label: 'Call data', n: null });
     return t;
   });
   /** Status info icon: what happened, what the telephony service sent, and the rule. */
@@ -367,7 +376,7 @@ export class CallAnalysisComponent implements OnInit {
         this.call.set(c);
         this.analysis.set(c.analysis || null);
       }
-      this.side.set(this.sideTabs()[0]?.key || 'answers');
+      this.side.set('details');
     } catch (e: any) {
       this.error.set(e.message || 'Could not load this call.');
     } finally { this.loading.set(false); }

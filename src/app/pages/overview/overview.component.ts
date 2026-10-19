@@ -208,7 +208,7 @@ import { AuthService } from '../../services/auth.service';
           <thead><tr><th>Day</th><th>Dialled</th><th>Reached</th><th>Completed</th><th>Not reached</th><th>Failed</th></tr></thead>
           <tbody>@for (r of report()?.trend || []; track r.day) { <tr><td>{{ dayLabel(r.day) }}</td><td>{{ r.dialled }}</td><td>{{ r.reached }}</td><td>{{ r.completed }}</td><td>{{ r.not_reached }}</td><td>{{ r.failed }}</td></tr> }</tbody>
         </table>
-        <footer>Echo by Cognilix</footer>
+        <footer>Echo by Vanik</footer>
       </section>
 
       <div class="card" style="margin-top: 12px">

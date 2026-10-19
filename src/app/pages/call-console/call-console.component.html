@@ -165,7 +165,7 @@
               <span class="field-label cc-var" [title]="v.key">
                 <span>{{ niceKey(v.key) }}</span>
                 <span class="chip mono">{{ v.type || 'text' }}</span>
-                @if (v.required !== false) { <span style="color: var(--red)">*</span> }
+                @if (v.required !== false) { <span style="color: var(--ds-danger-fg)">*</span> }
                 @if (v.share_on_call === false) { <span class="chip" title="The agent knows it but never says it">not spoken</span> }
               </span>
               <input class="input" [(ngModel)]="inputValues[v.key]" [name]="'iv_' + v.key" [placeholder]="v.sample || v.key" />
