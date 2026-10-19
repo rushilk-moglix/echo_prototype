@@ -153,6 +153,7 @@ export const ENDPOINTS = {
     analyze: '/api/ai/agent-builder/analyze',
     answers: (id: string) => `/api/ai/agent-builder/${seg(id)}/answers`,
     create: (id: string) => `/api/ai/agent-builder/${seg(id)}/create`,
+    sample: (name: string) => `/api/ai/agent-builder/samples/${seg(name)}`,
   },
   numbersAvailable: '/api/numbers/available',
 

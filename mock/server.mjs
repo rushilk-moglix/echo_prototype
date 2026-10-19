@@ -1482,7 +1482,7 @@ on('GET', '/webrtc/recording/:sid', ({ res, p, q }) => file(res, wav(callById(p.
 // Runs wherever the mock runs (node, the demo's service worker, the single file): seeded calls get their transcript read once.
 fillFromTranscripts();
 const credits = registerCredits({ on, json, fail, campaigns, agentByKey, orgOf, nowIso, rowStates, planOf, who: () => signedInEmail, isPlatformAdmin: () => (me() ? !!me().platform_admin : true) });
-registerBuilder({ on, json, fail, multipart, agents, agentByKey, agentDefaults, orgOf, nowIso, who: () => signedInEmail, credits, pushAgent: (a) => pushAgent(a),
+registerBuilder({ on, json, fail, file, multipart, agents, agentByKey, agentDefaults, orgOf, nowIso, who: () => signedInEmail, credits, pushAgent: (a) => pushAgent(a),
   flowsOf: (org) => OZN_CAMPAIGNS.filter((f) => f.org_id === org && f.enabled && f.direction !== 'inbound'), syncTargets });
 registerReports({ on, json, file, fail, campaigns, agents, agentByKey, users, orgOf, nowIso, rowStates, skippedRows: (c) => (c.skipped_rows || []).map((s) => ({ ...s, say: sayRow(agentByKey(c.agent), s.values) })),
   isDialled: (c, r) => !(r.status === 'input_validation_failed' || r.reason === 'data_validation_failed' || r.reason === 'duplicate_row' || !agentByKey(c.agent)?.ozonetel_campaign) && !!(r.attempts_detail?.length || ATTEMPTED.has(r.status)),

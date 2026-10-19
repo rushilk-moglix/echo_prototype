@@ -325,8 +325,7 @@ export class AgentBuilderComponent implements OnInit {
   async useSamples(): Promise<void> {
     this.busy.set(true);
     try {
-      const base = document.baseURI;
-      const got = await Promise.all(SAMPLES.map(async (n) => new File([await (await fetch(new URL('samples/' + n, base))).blob()], n)));
+      const got = await Promise.all(SAMPLES.map(async (n) => { const r = await fetch(this.api.builderSampleUrl(n)); if (!r.ok) throw new Error(n); return new File([await r.blob()], n); }));
       this.addFiles(got);
       if (!this.prompt().trim()) { this.pack.set('supplier'); this.prompt.set(PACK_TEXT['supplier']); }
     } catch { this.error.set('The example files could not be loaded.'); }

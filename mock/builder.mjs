@@ -3,7 +3,20 @@
 // a sentence. Echo reads it, asks only what it could not work out, and sets the whole agent up.
 // In this prototype the reading is rule based and runs on the files themselves; the product uses a model.
 import { randomUUID } from 'node:crypto';
-import { readXlsx } from './xlsx.mjs';
+import { readXlsx, writeXlsx } from './xlsx.mjs';
+
+// Example files for "Try it with example files": served by this backend so they work in every build, offline too.
+function sampleFiles() {
+  const rows = [['Supplier Code', 'Supplier Name', 'Mobile', 'PO Number', 'Material', 'Pending Qty', 'Promised Date']];
+  const sup = [['S-101', 'Supplier A', '9000000401'], ['S-102', 'Supplier B', '9000000402'], ['S-103', 'Supplier C', '9000000403']];
+  let n = 0; for (const [c, nm, ph] of sup) for (let i = 0; i < 3; i++) rows.push([c, nm, ph, `45000${100 + n++}`, ['Bearing 6204', 'Hex bolt M12', 'Gasket 40mm'][i], String(50 * (i + 1)), `2${i}/10/2026`]);
+  return {
+    'open_po_lines.xlsx': { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', body: () => writeXlsx(rows, 'Lines') },
+    'supplier_followup_sop.txt': { type: 'text/plain', body: () => Buffer.from('Supplier follow up SOP\n1. Always confirm the PO number before asking about dates.\n2. If the supplier says the material is delayed, take the new date and the reason.\n3. Never accept a date more than 30 days late without telling the buyer.\n4. Escalate to the buyer if the supplier refuses to share a date.\nCall between 10 am and 6 pm only.') },
+    'erp_schema.sql': { type: 'text/plain', body: () => Buffer.from('CREATE TABLE purchase_orders (po_number varchar(20) primary key, supplier_code varchar(10), status varchar(20), buyer varchar(40));\nCREATE TABLE po_lines (po_number varchar(20), line_no int, material varchar(80), open_qty int, promised_date date);') },
+    'call_script.txt': { type: 'text/plain', body: () => Buffer.from('Agent: Namaste, main Kavya, purchase team se. Kya meri baat supplier sahab se ho rahi hai?\nSupplier: Haan boliye.') },
+  };
+}
 
 const KIND_LABEL = { input: 'List you call from', output: 'Sample of the answers', db: 'Database design', script: 'Call script', sop: 'SOP', docs: 'Customer documents' };
 const ext = (n) => (String(n).split('.').pop() || '').toLowerCase();
@@ -94,7 +107,7 @@ function tablesFrom(text) {
   return out;
 }
 
-export function registerBuilder({ on, json, fail, multipart, agents, agentByKey, agentDefaults, orgOf, nowIso, who, credits, flowsOf, syncTargets, pushAgent }) {
+export function registerBuilder({ on, json, fail, file, multipart, agents, agentByKey, agentDefaults, orgOf, nowIso, who, credits, flowsOf, syncTargets, pushAgent }) {
   const sessions = new Map();
 
   function analyze(org, prompt, pack, files) {
@@ -224,6 +237,10 @@ export function registerBuilder({ on, json, fail, multipart, agents, agentByKey,
     return [...out, { id: 'ai_5', enabled: true, title: 'Call details', kind: 'input', body: '' }, { id: 'ai_6', enabled: true, title: 'Outcome reporting', kind: 'output', body: '' }];
   }
 
+  on('GET', '/api/ai/agent-builder/samples/:name', ({ res, p }) => {
+    const f = sampleFiles()[p.name]; if (!f) return fail(res, 404, 'No such example file');
+    file(res, f.body(), f.type, p.name);
+  });
   // Read everything, draft the agent, list the questions. Free; building it is what costs credits.
   on('POST', '/api/ai/agent-builder/analyze', ({ res, req, raw: buf, q }) => {
     const form = (req.headers['content-type'] || '').includes('multipart') ? multipart(req, buf) : JSON.parse(buf.toString('utf8') || '{}');

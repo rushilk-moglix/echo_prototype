@@ -503,6 +503,9 @@ export class ApiService {
   campaignResponsesUrl(id: string): string {
     return this.apiUrl(ENDPOINTS.campaigns.responsesXlsx(id));
   }
+  /** One of the example files the AI builder offers when someone has none at hand. */
+  builderSampleUrl(name: string): string { return this.apiUrl(ENDPOINTS.builder.sample(name)); }
+
   agentTemplateUrl(key: string): string {
     return this.apiUrl(ENDPOINTS.agents.template(key));
   }
