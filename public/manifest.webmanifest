@@ -1,7 +1,7 @@
 {
-  "name": "Echo by Cognilix",
+  "name": "Echo by Vanik",
   "short_name": "Echo",
-  "description": "Echo by Cognilix: build voice agents, run calling campaigns from a sheet, and get every answer back.",
+  "description": "Echo by Vanik: build voice agents, run calling campaigns from a sheet, and get every answer back.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
